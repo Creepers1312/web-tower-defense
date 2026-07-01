@@ -115,7 +115,7 @@
     "leakDamage": 1,
     "flags": [],
     "color": "#9ca3af",
-    "sprite": "nallon_black",
+    "sprite": "nallon_zebra",
     "children": [
       { "enemyId": "nallon_black", "count": 1 },
       { "enemyId": "nallon_white", "count": 1 }
