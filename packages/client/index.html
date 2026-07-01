@@ -148,17 +148,68 @@
         height: 24px;
       }
 
-      /* --- Selected-tower footer (BTD-style bottom bar) --- */
+      /* Wave controls in the sidebar (start + fast-forward), reference-style. */
+      #waveControls {
+        display: flex;
+        gap: 8px;
+        align-items: stretch;
+      }
+      #waveControls .go-btn {
+        flex: 1;
+        text-align: center;
+        font-weight: 700;
+        background: #16a34a;
+        border-color: #22c55e;
+        color: #f0fdf4;
+        font-size: 16px;
+        padding: 10px;
+      }
+      #waveControls .go-btn:hover:not(:disabled) {
+        background: #15803d;
+      }
+      #waveControls .ff-btn {
+        width: auto;
+        text-align: center;
+        min-width: 54px;
+        font-weight: 700;
+      }
+
+      /* --- Persistent bottom bar (fixed height; only the centre swaps) --- */
       #footer {
         grid-column: 1 / 3;
         display: flex;
         align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
+        gap: 12px;
+        min-height: 72px;
       }
       #footer button {
         width: auto;
         text-align: center;
+      }
+      .footer-body {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 56px;
+        overflow: hidden;
+      }
+      .footer-util {
+        display: flex;
+        gap: 8px;
+        align-self: center;
+      }
+      /* Empty "Special Agents" placeholder slots for the default footer view. */
+      .agent-slots {
+        display: flex;
+        gap: 6px;
+      }
+      .agent-slots .slot {
+        width: 44px;
+        height: 44px;
+        border: 1px dashed #475569;
+        border-radius: 8px;
+        background: #0f172a;
       }
       #footer .fsec {
         display: flex;
@@ -242,11 +293,6 @@
         <span class="stat"><img class="hud-icon" src="/sprites/heart.png" alt="lives" /> <b id="lives">0</b></span>
         <span class="stat">🌊 Wave <b id="wave">0</b></span>
         <span class="stat">Phase: <b id="phase">—</b></span>
-        <span class="spacer"></span>
-        <button id="pauseBtn" style="width:auto">⏸ Pause</button>
-        <button id="speedBtn" style="width:auto">1×</button>
-        <button id="autoBtn" style="width:auto">Auto: off</button>
-        <button id="startWave" class="primary" style="width:auto">Start Wave</button>
       </div>
 
       <div id="app"></div>
@@ -256,31 +302,59 @@
           <h2>Towers</h2>
           <div id="palette"></div>
         </div>
+        <div class="panel" id="waveControls">
+          <button id="startWave" class="go-btn">GO! ▶</button>
+          <button id="speedBtn" class="ff-btn" title="Game speed">1×</button>
+        </div>
       </div>
 
-      <div class="panel" id="footer" style="display:none">
-        <div class="fsec fportrait">
-          <img id="selIcon" src="" alt="" />
-          <div>
-            <div id="selName">—</div>
-            <div id="selStats" class="muted">—</div>
+      <!-- Footer stays a fixed height; only its centre content swaps between the
+           default (agents) view and the selected-tower view, so nothing shifts. -->
+      <div class="panel" id="footer">
+        <!-- Default view: shown when no tower is selected. -->
+        <div id="footerDefault" class="footer-body">
+          <span class="flabel">Special Agents</span>
+          <div class="agent-slots">
+            <div class="slot"></div>
+            <div class="slot"></div>
+            <div class="slot"></div>
+            <div class="slot"></div>
+            <div class="slot"></div>
+            <div class="slot"></div>
           </div>
         </div>
-        <div class="fdivider"></div>
-        <div class="fsec">
-          <span class="flabel">Target</span>
-          <div class="seg" id="targeting">
-            <button data-mode="first">First</button>
-            <button data-mode="last">Last</button>
-            <button data-mode="close">Close</button>
-            <button data-mode="strong">Strong</button>
+
+        <!-- Selected-tower view: shown when a tower is selected. -->
+        <div id="footerSelected" class="footer-body" style="display:none">
+          <div class="fsec fportrait">
+            <img id="selIcon" src="" alt="" />
+            <div>
+              <div id="selName">—</div>
+              <div id="selStats" class="muted">—</div>
+            </div>
           </div>
+          <div class="fdivider"></div>
+          <div class="fsec">
+            <span class="flabel">Target</span>
+            <div class="seg" id="targeting">
+              <button data-mode="first">First</button>
+              <button data-mode="last">Last</button>
+              <button data-mode="close">Close</button>
+              <button data-mode="strong">Strong</button>
+            </div>
+          </div>
+          <div class="fdivider"></div>
+          <button id="up0" class="fup"></button>
+          <button id="up1" class="fup"></button>
+          <button id="ability" class="primary" style="display:none"></button>
+          <button id="sell" class="danger">Sell</button>
         </div>
-        <div class="fdivider"></div>
-        <button id="up0" class="fup"></button>
-        <button id="up1" class="fup"></button>
-        <button id="ability" class="primary" style="display:none"></button>
-        <button id="sell" class="danger">Sell</button>
+
+        <!-- Persistent utility cluster (the "home" corner): always visible. -->
+        <div class="footer-util">
+          <button id="pauseBtn">⏸ Pause</button>
+          <button id="autoBtn">Auto: off</button>
+        </div>
       </div>
 
       <div id="hint"></div>
