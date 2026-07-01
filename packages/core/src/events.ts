@@ -9,7 +9,7 @@
 /** Map of event name -> payload shape. Extend this as new events are added. */
 export interface EventMap {
   onWaveStart: { waveIndex: number };
-  onWaveComplete: { waveIndex: number };
+  onWaveComplete: { waveIndex: number; bonus: number };
   onEnemyKilled: { enemyId: string; reward: number };
   onEnemyLeaked: { enemyId: string; leakDamage: number };
   onTowerPlaced: { towerId: string };
