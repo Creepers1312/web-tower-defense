@@ -71,14 +71,42 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        align-self: start;
+        /* Stretch to the full board height (removed align-self:start). */
+      }
+      /* Tower shop grows to fill the sidebar so it runs the full length; the
+         wave controls stay pinned at the bottom (reference-style). */
+      #sidebar > .panel:first-child {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      #sidebar #palette {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
       }
       .panel {
+        position: relative;
         background: #1e293b;
         border: 1px solid #334155;
         border-radius: 8px;
         padding: 10px;
         font-size: 13px;
+      }
+      /* Riveted panel corners (the "dots" in each corner, as on the reference). */
+      .panel::after {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        pointer-events: none;
+        border-radius: 6px;
+        background-repeat: no-repeat;
+        background-image:
+          radial-gradient(circle at top left, #94a3b8 0 2px, transparent 2.6px),
+          radial-gradient(circle at top right, #94a3b8 0 2px, transparent 2.6px),
+          radial-gradient(circle at bottom left, #94a3b8 0 2px, transparent 2.6px),
+          radial-gradient(circle at bottom right, #94a3b8 0 2px, transparent 2.6px);
       }
       .panel h2 {
         font-size: 12px;
@@ -153,6 +181,7 @@
         display: flex;
         gap: 8px;
         align-items: stretch;
+        margin-top: 10px;
       }
       #waveControls .go-btn {
         flex: 1;
@@ -298,13 +327,13 @@
       <div id="app"></div>
 
       <div id="sidebar">
-        <div class="panel">
+        <div class="panel" id="towerPanel">
           <h2>Towers</h2>
           <div id="palette"></div>
-        </div>
-        <div class="panel" id="waveControls">
-          <button id="startWave" class="go-btn">GO! ▶</button>
-          <button id="speedBtn" class="ff-btn" title="Game speed">1×</button>
+          <div id="waveControls">
+            <button id="startWave" class="go-btn">GO! ▶</button>
+            <button id="speedBtn" class="ff-btn" title="Game speed">1×</button>
+          </div>
         </div>
       </div>
 
