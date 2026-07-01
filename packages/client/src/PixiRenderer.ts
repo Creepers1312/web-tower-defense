@@ -50,6 +50,18 @@ function parseColor(hex: string | undefined, fallback: number): number {
   return Number.isNaN(n) ? fallback : n;
 }
 
+/** Draw a white star burst (the classic "pop" effect). */
+function drawStar(g: Graphics, outer: number, points = 9, innerRatio = 0.45): Graphics {
+  const pts: number[] = [];
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outer : outer * innerRatio;
+    const a = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+    pts.push(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  g.poly(pts).fill(0xffffff);
+  return g;
+}
+
 /** Draw a placeholder spiky ball (dark body + black triangular spikes). */
 function drawSpikyBall(g: Graphics, radius: number, spikes = 8): Graphics {
   const spike = radius * 0.9;
@@ -99,7 +111,13 @@ export class PixiRenderer {
   private readonly towerLayer = new Container();
   private readonly enemyLayer = new Container();
   private readonly projectileLayer = new Container();
+  private readonly popLayer = new Container();
   private readonly ghostLayer = new Container();
+
+  /** Positions where an enemy popped this step (queued from events). */
+  private readonly pendingPops: Vec2[] = [];
+  /** Active pop-star effects, aged down each rendered frame. */
+  private activePops: { gfx: Graphics; life: number; maxLife: number }[] = [];
 
   private readonly towerNodes = new Map<string, EntityNode>();
   private readonly enemyNodes = new Map<string, EntityNode>();
@@ -112,7 +130,13 @@ export class PixiRenderer {
   constructor(
     private readonly world: World,
     private readonly registry: Registry,
-  ) {}
+  ) {
+    // Remember where each enemy popped so we can burst a star there.
+    this.world.getEvents().on('onEnemyKilled', (p) => {
+      const e = this.world.getState().enemies.find((x) => x.id === p.enemyId);
+      if (e) this.pendingPops.push({ x: e.pos.x, y: e.pos.y });
+    });
+  }
 
   get canvas(): HTMLCanvasElement {
     return this.app.canvas;
@@ -136,6 +160,7 @@ export class PixiRenderer {
       this.towerLayer,
       this.enemyLayer,
       this.projectileLayer,
+      this.popLayer,
       this.ghostLayer,
     );
   }
@@ -220,8 +245,35 @@ export class PixiRenderer {
     this.syncTowers(view.selectedTowerId);
     this.syncEnemies();
     this.syncProjectiles();
+    this.updatePops();
     this.drawRange(view);
     this.drawGhost(view);
+  }
+
+  /** Spawn queued pop stars and age existing ones (grow + fade, then remove). */
+  private updatePops(): void {
+    for (const pos of this.pendingPops) {
+      const g = drawStar(new Graphics(), 13);
+      g.position.set(pos.x, pos.y);
+      this.popLayer.addChild(g);
+      this.activePops.push({ gfx: g, life: 14, maxLife: 14 });
+    }
+    this.pendingPops.length = 0;
+
+    const survivors: typeof this.activePops = [];
+    for (const pop of this.activePops) {
+      pop.life -= 1;
+      if (pop.life <= 0) {
+        pop.gfx.destroy();
+        continue;
+      }
+      const t = 1 - pop.life / pop.maxLife; // 0 → 1 over its life
+      pop.gfx.scale.set(0.6 + t * 1.1);
+      pop.gfx.alpha = pop.life / pop.maxLife;
+      pop.gfx.rotation = t * 0.6;
+      survivors.push(pop);
+    }
+    this.activePops = survivors;
   }
 
   /** The sprite key for a tower's current look: the highest reached upgrade
