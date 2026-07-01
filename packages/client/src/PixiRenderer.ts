@@ -131,10 +131,10 @@ export class PixiRenderer {
   private readonly popLayer = new Container();
   private readonly ghostLayer = new Container();
 
-  /** Positions where an enemy popped this step (queued from events). */
-  private readonly pendingPops: Vec2[] = [];
-  /** Active pop-star effects, aged down each rendered frame. */
-  private activePops: { gfx: Graphics; life: number; maxLife: number }[] = [];
+  /** Pops queued from events this step (big = a boss blimp, small = a balloon). */
+  private readonly pendingPops: { x: number; y: number; big: boolean }[] = [];
+  /** Active pop effects, aged down each rendered frame. */
+  private activePops: { gfx: Container; life: number; maxLife: number; base: number }[] = [];
 
   private readonly towerNodes = new Map<string, EntityNode>();
   private readonly enemyNodes = new Map<string, EntityNode>();
@@ -155,7 +155,7 @@ export class PixiRenderer {
     // Remember where each enemy popped so we can burst a star there.
     this.world.getEvents().on('onEnemyKilled', (p) => {
       const e = this.world.getState().enemies.find((x) => x.id === p.enemyId);
-      if (e) this.pendingPops.push({ x: e.pos.x, y: e.pos.y });
+      if (e) this.pendingPops.push({ x: e.pos.x, y: e.pos.y, big: e.maxHp >= 100 });
     });
   }
 
@@ -283,7 +283,7 @@ export class PixiRenderer {
    *  A key with `{key}_0.png`, `{key}_1.png`, … becomes an animation; otherwise
    *  a single `{key}.png` is loaded. */
   private async loadSprites(): Promise<void> {
-    const keys = new Set<string>(['proj_dart']); // projectile sprite (not in defs)
+    const keys = new Set<string>(['proj_dart', 'pop_big', 'pop_small']); // extra sprites (not in defs)
     for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
     for (const t of this.registry.allTowers()) {
       if (t.sprite) keys.add(t.sprite);
@@ -355,11 +355,22 @@ export class PixiRenderer {
 
   /** Spawn queued pop stars and age existing ones (grow + fade, then remove). */
   private updatePops(): void {
-    for (const pos of this.pendingPops) {
-      const g = drawStar(new Graphics(), 13);
-      g.position.set(pos.x, pos.y);
-      this.popLayer.addChild(g);
-      this.activePops.push({ gfx: g, life: 14, maxLife: 14 });
+    for (const p of this.pendingPops) {
+      const tex = this.animations.get(p.big ? 'pop_big' : 'pop_small')?.[0];
+      let obj: Container;
+      let base: number;
+      if (tex) {
+        const s = new Sprite(tex);
+        s.anchor.set(0.5);
+        base = (p.big ? 96 : 40) / tex.width; // world-unit target size / texture width
+        obj = s;
+      } else {
+        obj = drawStar(new Graphics(), p.big ? 30 : 13); // fallback if sprite missing
+        base = 1;
+      }
+      obj.position.set(p.x, p.y);
+      this.popLayer.addChild(obj);
+      this.activePops.push({ gfx: obj, life: 14, maxLife: 14, base });
     }
     this.pendingPops.length = 0;
 
@@ -371,7 +382,7 @@ export class PixiRenderer {
         continue;
       }
       const t = 1 - pop.life / pop.maxLife; // 0 → 1 over its life
-      pop.gfx.scale.set(0.6 + t * 1.1);
+      pop.gfx.scale.set(pop.base * (0.6 + t * 1.1));
       pop.gfx.alpha = pop.life / pop.maxLife;
       pop.gfx.rotation = t * 0.6;
       survivors.push(pop);
@@ -505,6 +516,10 @@ export class PixiRenderer {
         o.rect(-w / 2, y, w, 4).fill(COLORS.enemyHpBg);
         o.rect(-w / 2, y, w * frac, 4).fill(COLORS.enemyHp);
       }
+      // Bosses (blimps, maxHp >= 100) scale up with their hit count so they read
+      // as bosses; regular Nallons stay at 1x.
+      const size = enemy.maxHp >= 100 ? Math.min(4, 1 + Math.log10(enemy.maxHp / 10)) : 1;
+      node.root.scale.set(size);
       node.root.position.set(enemy.pos.x, enemy.pos.y);
     }
     this.reapNodes(this.enemyNodes, seen, this.enemyLayer);
