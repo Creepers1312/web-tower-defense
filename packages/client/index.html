@@ -23,10 +23,14 @@
       }
       #game {
         display: grid;
-        grid-template-columns: auto 220px;
-        grid-template-rows: auto auto auto auto;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        /* row 2 (the board) flexes; the rest size to content */
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
         gap: 10px;
         padding: 12px;
+        box-sizing: border-box;
+        width: min(100vw, 1080px);
+        height: 100vh;
       }
       #topbar {
         grid-column: 1 / 3;
@@ -50,11 +54,26 @@
         border-radius: 8px;
         overflow: hidden;
         line-height: 0;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      /* The canvas keeps its 4:3 buffer but scales down to fit the board cell,
+         capped at its native size so it never blurs by upscaling. */
+      #app canvas {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: min(100%, 800px);
+        max-height: min(100%, 600px);
       }
       #sidebar {
         display: flex;
         flex-direction: column;
         gap: 10px;
+        align-self: start;
       }
       .panel {
         background: #1e293b;
