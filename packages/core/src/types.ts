@@ -84,6 +84,8 @@ export interface TowerDef {
   /** Base special capabilities (may be extended by upgrade tiers). */
   camoDetection?: boolean;
   popsLead?: boolean;
+  /** Optional sprite key for the renderer (falls back to a placeholder shape). */
+  sprite?: string;
   /** Exactly two upgrade paths. */
   paths: [UpgradePath, UpgradePath];
 }
@@ -112,6 +114,8 @@ export interface EnemyDef {
   regrowRate?: number;
   /** Placeholder render colour ('#rrggbb'). Interpreted only by the renderer. */
   color?: string;
+  /** Optional sprite key for the renderer (falls back to the colour circle). */
+  sprite?: string;
 }
 
 export interface WaveEntry {

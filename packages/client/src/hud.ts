@@ -75,7 +75,10 @@ export class Hud {
   private buildPalette(): void {
     for (const def of this.registry.allTowers()) {
       const btn = document.createElement('button');
-      btn.textContent = `${def.name} — $${def.cost}`;
+      const icon = def.sprite
+        ? `<img class="hud-icon" src="/sprites/${def.sprite}.png" alt="" />`
+        : '';
+      btn.innerHTML = `${icon}<span>${def.name} — $${def.cost}</span>`;
       btn.addEventListener('click', () => this.togglePlacing(def.id));
       this.palette.appendChild(btn);
       this.paletteButtons.set(def.id, btn);

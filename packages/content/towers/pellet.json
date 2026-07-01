@@ -9,6 +9,7 @@
   "effects": ["directDamage"],
   "camoDetection": false,
   "popsLead": false,
+  "sprite": "tower_dart",
   "paths": [
     {
       "tiers": [

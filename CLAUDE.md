@@ -136,6 +136,14 @@ by tower capabilities (`towerCapabilities` folds base + tier `grants`):
 All of this is content: new Nallons/towers are JSON only — no core changes.
 Original placeholder theme only (coined term "Nallon"); no Ninja Kiwi names/art.
 
+## Placeholder art (client only)
+
+Original pixel-art placeholders live in `packages/client/public/sprites/` (served
+by Vite at `/sprites/*.png`), sliced from the source sheet `art/styles.jpg`.
+`EnemyDef.sprite` / `TowerDef.sprite` name a sprite key (data-driven); the
+renderer loads it with nearest-neighbour scaling and falls back to a coloured
+shape when a sprite is missing. Core never touches sprites — rendering only.
+
 ## What NOT to do (this phase)
 
 - No co-op, no server, no WebSocket, no Docker.
