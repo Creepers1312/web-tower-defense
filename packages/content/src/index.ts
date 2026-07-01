@@ -16,13 +16,19 @@ import type { Addon, EnemyDef, MapDef, TowerDef } from '@td/core';
 import runner from '../enemies/runner.json';
 import nallons from '../enemies/nallons.json';
 import pellet from '../towers/pellet.json';
+import boomerang from '../towers/boomerang.json';
+import nail from '../towers/nail.json';
 import meadow from '../maps/meadow.json';
 
 export const enemies: EnemyDef[] = [
   runner as unknown as EnemyDef,
   ...(nallons as unknown as EnemyDef[]),
 ];
-export const towers: TowerDef[] = [pellet as unknown as TowerDef];
+export const towers: TowerDef[] = [
+  pellet as unknown as TowerDef,
+  boomerang as unknown as TowerDef,
+  nail as unknown as TowerDef,
+];
 export const maps: MapDef[] = [meadow as unknown as MapDef];
 
 /** Register every bundled definition into the given registry. */

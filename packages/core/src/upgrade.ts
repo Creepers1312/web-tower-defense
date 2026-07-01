@@ -66,8 +66,8 @@ export function effectiveStats(def: TowerDef, tower: TowerInstance): {
   let range = def.range;
   let fireRate = def.fireRate;
   let damage = def.damage;
-  let pierce = 0; // extra enemies hit per shot (base hits one)
-  let shots = 1; // projectiles per shot
+  let pierce = def.pierce ?? 0; // extra enemies hit per shot (base hits one)
+  let shots = def.shots ?? 1; // projectiles per shot
 
   for (let path = 0 as 0 | 1; path <= 1; path = (path + 1) as 0 | 1) {
     const level = tower.tiers[path];

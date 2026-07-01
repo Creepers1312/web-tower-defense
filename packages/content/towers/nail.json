@@ -1,0 +1,51 @@
+{
+  "id": "tower_nail",
+  "name": "Nail Shooter",
+  "cost": 260,
+  "range": 90,
+  "fireRate": 0.9,
+  "damage": 1,
+  "shots": 8,
+  "fireMode": "radial",
+  "targeting": "first",
+  "effects": ["directDamage"],
+  "sprite": "nail_base",
+  "paths": [
+    {
+      "tiers": [
+        { "name": "Faster Shooting", "cost": 200, "modifiers": { "fireRate": 0.5 } },
+        { "name": "Even Faster Shooting", "cost": 300, "modifiers": { "fireRate": 0.8 } },
+        { "name": "Tack Sprayer", "cost": 500, "modifiers": { "shots": 8 } },
+        {
+          "name": "Ring of Fire",
+          "cost": 2000,
+          "modifiers": { "damage": 1, "shots": 8, "range": 15 },
+          "grants": { "popsLead": true },
+          "sprite": "nail_a4"
+        }
+      ]
+    },
+    {
+      "tiers": [
+        { "name": "Extra Range Tacks", "cost": 150, "modifiers": { "range": 30 } },
+        { "name": "Super Range Tacks", "cost": 250, "modifiers": { "range": 40 } },
+        { "name": "Blade Shooter", "cost": 600, "modifiers": { "damage": 1, "pierce": 1 }, "sprite": "nail_b3" },
+        {
+          "name": "Blade Maelstrom",
+          "cost": 2500,
+          "modifiers": { "damage": 1, "pierce": 1 },
+          "grants": { "camoDetection": true },
+          "ability": {
+            "id": "blade_maelstrom",
+            "name": "Blade Maelstrom",
+            "duration": 8,
+            "cooldown": 40,
+            "radius": 1,
+            "buff": { "fireRate": 4 }
+          },
+          "sprite": "nail_b4"
+        }
+      ]
+    }
+  ]
+}
