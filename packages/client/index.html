@@ -221,7 +221,7 @@
         align-items: center;
         gap: 10px;
         min-height: 56px;
-        overflow: hidden;
+        overflow: visible; /* let upgrade tooltips escape upward */
       }
       .footer-util {
         display: flex;
@@ -246,16 +246,16 @@
         gap: 8px;
       }
       #footer .fportrait {
-        min-width: 170px;
+        min-width: 132px;
       }
       #footer .fportrait img {
-        width: 44px;
-        height: 44px;
+        width: 36px;
+        height: 36px;
         image-rendering: pixelated;
         background: #0f172a;
         border: 1px solid #334155;
         border-radius: 8px;
-        padding: 3px;
+        padding: 2px;
       }
       #footer #selName {
         font-weight: 600;
@@ -287,7 +287,8 @@
         border: none;
         border-right: 1px solid #475569;
         border-radius: 0;
-        padding: 6px 10px;
+        padding: 5px 8px;
+        font-size: 12px;
       }
       .seg button:last-child {
         border-right: none;
@@ -296,22 +297,74 @@
         background: #2563eb;
         outline: none;
       }
-      /* Upgrade-path buttons grow to fill the bar like the reference footer */
-      #footer .fup {
-        flex: 1 1 180px;
-        min-width: 150px;
-        text-align: left;
+      /* Compact upgrade-path icon tiles with a hover tooltip. */
+      .up-tile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        width: auto;
+      }
+      .up-tile .up-pips {
         display: flex;
         flex-direction: column;
         gap: 2px;
-        line-height: 1.25;
       }
-      #footer .fup .fup-name {
+      .up-tile .up-pips i {
+        display: block;
+        width: 14px;
+        height: 4px;
+        border-radius: 2px;
+        background: #475569;
+      }
+      .up-tile .up-pips i.on {
+        background: #22c55e;
+      }
+      .up-tile .up-ic {
+        width: 26px;
+        height: 26px;
+        image-rendering: pixelated;
+      }
+      .up-tile .up-cost {
         font-weight: 600;
+        font-size: 12px;
+        min-width: 34px;
+        text-align: left;
       }
-      #footer .fup .fup-sub {
-        font-size: 11px;
-        color: #cbd5e1;
+      .up-tile.locked,
+      .up-tile.maxed {
+        opacity: 0.6;
+      }
+      /* Tooltip: hidden until hover, floats above the tile (footer is at bottom). */
+      .up-tile .up-tip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        z-index: 20;
+        width: max-content;
+        max-width: 220px;
+        white-space: normal;
+        text-align: left;
+        background: #0f172a;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        padding: 7px 9px;
+        font-size: 12px;
+        line-height: 1.3;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+      }
+      .up-tile:hover .up-tip {
+        display: block;
+      }
+      .up-tile .up-tip b {
+        color: #f8fafc;
+      }
+      .up-tile .up-tip .up-tip-cost {
+        color: #fde047;
       }
     </style>
   </head>
@@ -373,10 +426,10 @@
             </div>
           </div>
           <div class="fdivider"></div>
-          <button id="up0" class="fup"></button>
-          <button id="up1" class="fup"></button>
-          <button id="ability" class="primary" style="display:none"></button>
           <button id="sell" class="danger">Sell</button>
+          <button id="up0" class="up-tile"></button>
+          <button id="up1" class="up-tile"></button>
+          <button id="ability" class="primary" style="display:none"></button>
         </div>
 
         <!-- Persistent utility cluster (the "home" corner): always visible. -->

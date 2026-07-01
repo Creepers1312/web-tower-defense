@@ -72,6 +72,10 @@ export class Hud {
   private banner = '';
   private bannerUntil = 0;
 
+  /** Cached upgrade-tile markup per path, so we only rebuild (and reset the
+   *  hover tooltip) when the content actually changes. */
+  private readonly upHtml: [string, string] = ['', ''];
+
   // --- game-loop controls (read by the loop in main.ts) ---
   private paused = false;
   private speedIndex = 0; // index into SPEEDS
@@ -369,26 +373,70 @@ export class Hud {
     path: 0 | 1,
   ): void {
     const level = tower.tiers[path];
+    const pips = [0, 1, 2, 3].map((i) => `<i class="${i < level ? 'on' : ''}"></i>`).join('');
+    const pipsHtml = `<span class="up-pips">${pips}</span>`;
+
+    let cls = 'up-tile';
+    let disabled = false;
+    let html: string;
+
     if (level >= 4) {
-      btn.innerHTML =
-        `<span class="fup-name">Path ${path + 1}</span>` +
-        `<span class="fup-sub">Fully upgraded</span>`;
-      btn.disabled = true;
-      return;
-    }
-    const tier = def.paths[path].tiers[level];
-    const can = canUpgrade(tower, path);
-    const affordable = this.world.getState().money >= tier.cost;
-    if (!can) {
-      // Path is locked because the other path already went deep (past tier 2).
-      btn.innerHTML =
-        `<span class="fup-name">${tier.name}</span>` +
-        `<span class="fup-sub">Path locked</span>`;
+      cls = 'up-tile maxed';
+      disabled = true;
+      html =
+        `${pipsHtml}${this.tierIcon(this.currentSprite(def, tower))}` +
+        `<span class="up-cost">MAX</span>` +
+        `<span class="up-tip"><b>Path ${path + 1}</b><br>Fully upgraded</span>`;
     } else {
-      btn.innerHTML =
-        `<span class="fup-name">▲ ${tier.name}</span>` +
-        `<span class="fup-sub">$${tier.cost}</span>`;
+      const tier = def.paths[path].tiers[level];
+      const can = canUpgrade(tower, path);
+      const affordable = this.world.getState().money >= tier.cost;
+      const icon = this.tierIcon(tier.sprite ?? def.sprite);
+      if (!can) {
+        cls = 'up-tile locked';
+        disabled = true;
+        html =
+          `${pipsHtml}${icon}<span class="up-cost">🔒</span>` +
+          `<span class="up-tip"><b>${tier.name}</b><br>Path locked — only one path may go past tier 2` +
+          `<br><span class="up-tip-cost">$${tier.cost}</span></span>`;
+      } else {
+        disabled = !affordable;
+        html =
+          `${pipsHtml}${icon}<span class="up-cost">$${tier.cost}</span>` +
+          `<span class="up-tip"><b>${tier.name}</b><br>${this.describeTier(tier)}` +
+          `<br><span class="up-tip-cost">$${tier.cost}</span></span>`;
+      }
     }
-    btn.disabled = !can || !affordable;
+
+    btn.className = cls;
+    btn.disabled = disabled;
+    // Only touch innerHTML when it changed, so hovering the tooltip stays stable.
+    if (this.upHtml[path] !== html) {
+      btn.innerHTML = html;
+      this.upHtml[path] = html;
+    }
+  }
+
+  /** Small icon markup for an upgrade tile (a tier/tower sprite, else a glyph). */
+  private tierIcon(sprite: string | undefined): string {
+    return sprite
+      ? `<img class="up-ic" src="/sprites/${sprite}.png" alt="">`
+      : `<span class="up-ic" style="text-align:center;font-size:18px;line-height:26px">▲</span>`;
+  }
+
+  /** Human-readable summary of what an upgrade tier does (from its data). */
+  private describeTier(tier: NonNullable<ReturnType<Registry['getTower']>>['paths'][0]['tiers'][0]): string {
+    const parts: string[] = [];
+    const m = tier.modifiers;
+    const signed = (n: number): string => (n > 0 ? `+${n}` : `${n}`);
+    if (m.range) parts.push(`${signed(m.range)} range`);
+    if (m.fireRate) parts.push(`${signed(m.fireRate)}/s fire rate`);
+    if (m.damage) parts.push(`${signed(m.damage)} damage`);
+    if (m.pierce) parts.push(`${signed(m.pierce)} pierce`);
+    if (m.shots) parts.push(`${signed(m.shots)} extra dart${Math.abs(m.shots) === 1 ? '' : 's'}`);
+    if (tier.grants?.camoDetection) parts.push('detects camo');
+    if (tier.grants?.popsLead) parts.push('pops lead');
+    if (tier.ability) parts.push(`activated: ${tier.ability.name}`);
+    return parts.length ? parts.join(' · ') : 'Upgrade';
   }
 }
