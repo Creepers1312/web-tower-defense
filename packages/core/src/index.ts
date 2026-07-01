@@ -85,7 +85,7 @@ export { movementSystem } from './systems/movement.js';
 export { combatSystem, selectTarget, PROJECTILE_SPEED } from './systems/combat.js';
 export { projectileSystem, HIT_RADIUS } from './systems/projectile.js';
 export { regrowSystem, regrowEnemy } from './systems/regrow.js';
-export { waveSystem } from './systems/wave.js';
+export { waveSystem, roundBonus, ROUND_BONUS_BASE, ROUND_BONUS_STEP } from './systems/wave.js';
 
 // World
 export { World, createInitialState } from './world.js';

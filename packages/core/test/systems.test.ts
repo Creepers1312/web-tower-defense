@@ -132,12 +132,13 @@ describe('economy', () => {
 
     expect(kills).toHaveLength(1);
     expect(kills[0]!.reward).toBe(7);
-    expect(world.getState().money).toBe(557); // 550 + 7
+    // 550 + 7 reward + 100 round-clear bonus (wave index 0).
+    expect(world.getState().money).toBe(657);
     expect(world.getState().lives).toBe(100); // nothing leaked
     expect(world.getState().enemies).toHaveLength(0);
   });
 
-  it('loses lives equal to leakDamage when an enemy leaks (no money gained)', () => {
+  it('loses lives equal to leakDamage when an enemy leaks', () => {
     const map = line({ waves: [{ entries: [{ enemyId: 'runner', count: 1, spacing: 1, delay: 0 }] }] });
     const world = new World(makeRegistry(map), 'line', { startMoney: 300, startLives: 100 });
 
@@ -151,7 +152,29 @@ describe('economy', () => {
     expect(leaks).toHaveLength(1);
     expect(leaks[0]!.leakDamage).toBe(3);
     expect(world.getState().lives).toBe(97); // 100 - 3
-    expect(world.getState().money).toBe(300); // unchanged
+    // No kill reward, but the round-clear bonus is still awarded: 300 + 100.
+    expect(world.getState().money).toBe(400);
+  });
+
+  it('awards a growing round-clear bonus on each wave', () => {
+    const map = line({
+      waves: [
+        { entries: [{ enemyId: 'runner', count: 1, spacing: 1, delay: 0 }] },
+        { entries: [{ enemyId: 'runner', count: 1, spacing: 1, delay: 0 }] },
+      ],
+    });
+    const world = new World(makeRegistry(map), 'line', { startMoney: 0, startLives: 100 });
+    const bonuses: number[] = [];
+    world.getEvents().on('onWaveComplete', (p) => bonuses.push(p.bonus));
+
+    world.submit({ kind: 'StartWave' });
+    for (let i = 0; i < 450; i++) world.step(); // wave 1 clears (enemy leaks)
+    expect(world.getState().phase).toBe('building');
+    world.submit({ kind: 'StartWave' });
+    for (let i = 0; i < 450; i++) world.step(); // wave 2 clears
+
+    expect(bonuses).toEqual([100, 125]); // base 100, +25 per wave index
+    expect(world.getState().money).toBe(225); // 0 + 100 + 125
   });
 });
 

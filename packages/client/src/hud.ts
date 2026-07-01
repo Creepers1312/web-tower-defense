@@ -50,6 +50,10 @@ export class Hud {
   private readonly hint = el<HTMLElement>('hint');
   private readonly paletteButtons = new Map<string, HTMLButtonElement>();
 
+  /** Transient "round cleared" banner (shown in the hint line for a few sec). */
+  private banner = '';
+  private bannerUntil = 0;
+
   constructor(
     private readonly world: World,
     private readonly registry: Registry,
@@ -58,6 +62,10 @@ export class Hud {
     this.buildPalette();
     this.wireControls();
     this.wireCanvas();
+    this.world.getEvents().on('onWaveComplete', (p) => {
+      this.banner = `✅ Round ${p.waveIndex + 1} cleared — bonus +$${p.bonus}`;
+      this.bannerUntil = performance.now() + 3500;
+    });
   }
 
   /** Highlight info consumed by the renderer each frame. */
@@ -180,9 +188,13 @@ export class Hud {
       btn.classList.toggle('active', this.placingType === type);
     }
 
-    this.hint.textContent = this.placingType
-      ? 'Click inside a buildable area (clear of the path) to place. Click the tower again to cancel.'
-      : 'Click a tower to select it. Pick a tower on the right to start placing.';
+    if (performance.now() < this.bannerUntil) {
+      this.hint.textContent = this.banner;
+    } else {
+      this.hint.textContent = this.placingType
+        ? 'Click inside a buildable area (clear of the path) to place. Click the tower again to cancel.'
+        : 'Click a tower to select it. Pick a tower on the right to start placing.';
+    }
 
     this.refreshSelected();
   }

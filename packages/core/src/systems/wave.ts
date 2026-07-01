@@ -11,6 +11,15 @@
 
 import type { SystemContext } from './context.js';
 
+/** Money awarded when a wave is cleared: base + step × (0-based) wave index. */
+export const ROUND_BONUS_BASE = 100;
+export const ROUND_BONUS_STEP = 25;
+
+/** The cash bonus for clearing the wave at the given 0-based index. */
+export function roundBonus(waveIndex: number): number {
+  return ROUND_BONUS_BASE + waveIndex * ROUND_BONUS_STEP;
+}
+
 export function waveSystem(ctx: SystemContext): void {
   const { state, map, events } = ctx;
 
@@ -30,7 +39,9 @@ export function waveSystem(ctx: SystemContext): void {
   const allSpawned = spawnedTotal >= totalCount;
 
   if (allSpawned && state.enemies.length === 0) {
-    events.emit('onWaveComplete', { waveIndex: state.waveIndex });
+    const bonus = roundBonus(state.waveIndex);
+    state.money += bonus;
+    events.emit('onWaveComplete', { waveIndex: state.waveIndex, bonus });
 
     if (state.waveIndex + 1 < map.waves.length) {
       state.waveIndex += 1;
