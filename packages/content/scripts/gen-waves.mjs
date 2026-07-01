@@ -38,10 +38,34 @@ const TYPES = [
   { id: 'nallon_armored', rbe: 104, unlock: 24, spacing: 0.9, cap: 8 }, // ceramic
 ];
 
+/** Blimp-class bosses (kept out of the RBE fill and scheduled explicitly, since
+ *  their totals would otherwise swamp a round). RBE shown for the log only. */
+const BOSSES = {
+  nallon_blimp: { rbe: 616, spacing: 3 },
+  nallon_behemoth: { rbe: 3164, spacing: 4 },
+  nallon_colossus: { rbe: 16656, spacing: 5 },
+  nallon_wraith: { rbe: 800, spacing: 3 },
+  nallon_leviathan: { rbe: 67200, spacing: 6 },
+};
+
+/** Fixed boss appearances per round (deterministic). */
+const BOSS_SCHEDULE = {
+  10: [{ id: 'nallon_blimp', count: 1 }],
+  15: [{ id: 'nallon_wraith', count: 1 }],
+  20: [{ id: 'nallon_blimp', count: 2 }],
+  25: [{ id: 'nallon_behemoth', count: 1 }],
+  30: [{ id: 'nallon_behemoth', count: 1 }, { id: 'nallon_blimp', count: 2 }],
+  35: [{ id: 'nallon_wraith', count: 2 }],
+  40: [{ id: 'nallon_colossus', count: 1 }],
+  45: [{ id: 'nallon_behemoth', count: 2 }, { id: 'nallon_wraith', count: 1 }],
+  50: [{ id: 'nallon_leviathan', count: 1 }],
+};
+
 /** Total RBE budget a round should contain — a smooth, ever-rising curve. */
 function budget(r) {
   const base = 9 + (r - 1) * 5 + Math.pow(r - 1, 1.7) * 0.8;
-  const milestone = r % 10 === 0 ? 1.3 : 1; // every 10th round is a spike
+  // Boss rounds get their spike from the boss itself; other decades still bump.
+  const milestone = r % 10 === 0 && !BOSS_SCHEDULE[r] ? 1.3 : 1;
   return Math.round(base * milestone);
 }
 
@@ -84,12 +108,26 @@ function buildRound(r) {
 
   // Spawn order: weakest first (they arrive early), tough ones layered in later.
   picks.sort((a, b) => a.type.rbe - b.type.rbe);
-  return picks.map((p, i) => ({
+  const entries = picks.map((p, i) => ({
     enemyId: p.type.id,
     count: p.count,
     spacing: p.type.spacing,
     delay: Number((i * 1.5).toFixed(2)), // stagger groups a bit
   }));
+
+  // Bosses come after the chaff, spaced out.
+  const bosses = BOSS_SCHEDULE[r] ?? [];
+  let bossDelay = entries.length * 1.5 + 4;
+  for (const b of bosses) {
+    entries.push({
+      enemyId: b.id,
+      count: b.count,
+      spacing: BOSSES[b.id].spacing,
+      delay: Number(bossDelay.toFixed(2)),
+    });
+    bossDelay += b.count * BOSSES[b.id].spacing + 3;
+  }
+  return entries;
 }
 
 const waves = [];
@@ -103,7 +141,8 @@ writeFileSync(MAP_PATH, JSON.stringify(map, null, 2) + '\n');
 for (const [i, w] of waves.entries()) {
   const rbe = w.entries.reduce((s, e) => {
     const t = TYPES.find((x) => x.id === e.enemyId);
-    return s + e.count * (t ? t.rbe : 0);
+    const rbePer = t ? t.rbe : BOSSES[e.enemyId]?.rbe ?? 0;
+    return s + e.count * rbePer;
   }, 0);
   const desc = w.entries.map((e) => `${e.enemyId.replace('nallon_', '')}x${e.count}`).join(' ');
   console.log(`R${String(i + 1).padStart(2)} rbe~${String(rbe).padStart(4)}  ${desc}`);
