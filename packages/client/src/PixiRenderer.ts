@@ -10,7 +10,7 @@
  * shapes otherwise. Sprites use nearest-neighbour scaling to stay crisp.
  */
 
-import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { AnimatedSprite, Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { effectiveStats, type Registry, type Vec2, type World } from '@td/core';
 
 export const VIEW_WIDTH = 800;
@@ -55,6 +55,10 @@ interface EntityNode {
   overlay: Graphics;
   /** Sprite key of the current body, so we can swap it when it changes. */
   spriteKey?: string;
+  /** The body display object (Sprite / AnimatedSprite / Graphics). */
+  body?: Container;
+  /** Previous cooldown, to detect the moment a tower fires. */
+  prevCooldown?: number;
 }
 
 export class PixiRenderer {
@@ -70,7 +74,8 @@ export class PixiRenderer {
   private readonly towerNodes = new Map<string, EntityNode>();
   private readonly enemyNodes = new Map<string, EntityNode>();
   private readonly projectileGfx = new Map<string, Graphics>();
-  private readonly textures = new Map<string, Texture>();
+  /** One or more textures per sprite key (multiple → an animation). */
+  private readonly animations = new Map<string, Texture[]>();
   private readonly range = new Graphics();
   private readonly ghost = new Graphics();
 
@@ -105,7 +110,9 @@ export class PixiRenderer {
     );
   }
 
-  /** Load every sprite referenced by content, keyed by its sprite name. */
+  /** Load every sprite referenced by content, keyed by its sprite name.
+   *  A key with `{key}_0.png`, `{key}_1.png`, … becomes an animation; otherwise
+   *  a single `{key}.png` is loaded. */
   private async loadSprites(): Promise<void> {
     const keys = new Set<string>();
     for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
@@ -114,28 +121,51 @@ export class PixiRenderer {
       for (const path of t.paths) for (const tier of path.tiers) if (tier.sprite) keys.add(tier.sprite);
     }
 
-    await Promise.all(
-      [...keys].map(async (key) => {
-        try {
-          const tex = await Assets.load<Texture>(`/sprites/${key}.png`);
-          tex.source.scaleMode = 'nearest'; // crisp pixel art
-          this.textures.set(key, tex);
-        } catch {
-          /* missing sprite → placeholder shape is used instead */
-        }
-      }),
-    );
+    const load = async (url: string): Promise<Texture | null> => {
+      try {
+        const tex = await Assets.load<Texture>(url);
+        tex.source.scaleMode = 'nearest'; // crisp pixel art
+        return tex;
+      } catch {
+        return null;
+      }
+    };
+
+    for (const key of keys) {
+      const frames: Texture[] = [];
+      for (let i = 0; ; i++) {
+        const tex = await load(`/sprites/${key}_${i}.png`);
+        if (!tex) break;
+        frames.push(tex);
+      }
+      if (frames.length === 0) {
+        const single = await load(`/sprites/${key}.png`);
+        if (single) frames.push(single);
+      }
+      if (frames.length) this.animations.set(key, frames);
+    }
   }
 
-  /** Build a sprite body sized to `targetHeight`, or null if no texture. */
-  private makeSprite(key: string | undefined, targetHeight: number): Sprite | null {
-    if (!key) return null;
-    const tex = this.textures.get(key);
-    if (!tex) return null;
-    const s = new Sprite(tex);
-    s.anchor.set(0.5);
-    s.scale.set(targetHeight / tex.height);
-    return s;
+  /** Build a body sized to `targetHeight`: an AnimatedSprite for multi-frame
+   *  keys (plays once on demand), a Sprite for single frames, or null. */
+  private makeBody(key: string | undefined, targetHeight: number): Container | null {
+    const frames = key ? this.animations.get(key) : undefined;
+    if (!frames || frames.length === 0) return null;
+    const first = frames[0]!;
+    if (frames.length === 1) {
+      const s = new Sprite(first);
+      s.anchor.set(0.5);
+      s.scale.set(targetHeight / first.height);
+      return s;
+    }
+    const anim = new AnimatedSprite(frames);
+    anim.anchor.set(0.5);
+    anim.scale.set(targetHeight / first.height);
+    anim.animationSpeed = 0.35;
+    anim.loop = false;
+    anim.onComplete = () => anim.gotoAndStop(0);
+    anim.gotoAndStop(0);
+    return anim;
   }
 
   screenToWorld(clientX: number, clientY: number): Vec2 {
@@ -203,12 +233,21 @@ export class PixiRenderer {
       if (node.spriteKey !== wantKey || node.root.children.length === 0) {
         node.root.removeChildren().forEach((c) => c.destroy());
         const body =
-          this.makeSprite(wantKey, TOWER_RADIUS * 2) ??
+          this.makeBody(wantKey, TOWER_RADIUS * 2) ??
           new Graphics().circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
         node.overlay = new Graphics();
+        node.body = body;
         node.root.addChild(body, node.overlay);
         node.spriteKey = wantKey;
+        node.prevCooldown = tower.cooldown;
       }
+
+      // Play the fire animation the moment the tower shoots (cooldown resets up).
+      if (node.body instanceof AnimatedSprite && tower.cooldown > (node.prevCooldown ?? 0) + 1e-4) {
+        node.body.gotoAndPlay(0);
+      }
+      node.prevCooldown = tower.cooldown;
+
       node.overlay.clear();
       if (tower.id === selectedId) {
         node.overlay.circle(0, 0, TOWER_RADIUS + 4).stroke({ width: 2, color: COLORS.towerSelected });
@@ -228,7 +267,7 @@ export class PixiRenderer {
         const def = this.registry.getEnemy(enemy.type);
         const isLead = enemy.flags.includes('lead');
         const body =
-          this.makeSprite(def?.sprite, ENEMY_RADIUS * 2) ??
+          this.makeBody(def?.sprite, ENEMY_RADIUS * 2) ??
           new Graphics()
             .circle(0, 0, ENEMY_RADIUS)
             .fill(isLead ? COLORS.lead : parseColor(def?.color, COLORS.enemy));

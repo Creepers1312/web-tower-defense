@@ -9,22 +9,22 @@
   "effects": ["directDamage"],
   "camoDetection": false,
   "popsLead": false,
-  "sprite": "tower_dart",
+  "sprite": "dart_base",
   "paths": [
     {
       "tiers": [
-        { "name": "Sharper Pellets", "cost": 80, "modifiers": { "damage": 1 }, "sprite": "tower_dart_1" },
-        { "name": "Faster Trigger", "cost": 120, "modifiers": { "fireRate": 1 }, "sprite": "tower_dart_2" },
-        { "name": "Lead Piercer", "cost": 320, "modifiers": { "range": 20, "damage": 1 }, "grants": { "popsLead": true }, "sprite": "tower_dart_3" },
-        { "name": "Piercing Rounds", "cost": 800, "modifiers": { "damage": 3 }, "addEffects": ["pierce"], "sprite": "tower_dart_4" }
+        { "name": "Sharper Pellets", "cost": 80, "modifiers": { "damage": 1 }, "sprite": "dart_a1" },
+        { "name": "Faster Trigger", "cost": 120, "modifiers": { "fireRate": 1 }, "sprite": "dart_a2" },
+        { "name": "Lead Piercer", "cost": 320, "modifiers": { "range": 20, "damage": 1 }, "grants": { "popsLead": true }, "sprite": "dart_a3" },
+        { "name": "Spiked Juggernaut", "cost": 800, "modifiers": { "damage": 3 }, "addEffects": ["pierce"], "sprite": "dart_a4" }
       ]
     },
     {
       "tiers": [
-        { "name": "Wider Sight", "cost": 90, "modifiers": { "range": 30 }, "sprite": "tower_dart_1" },
-        { "name": "Keen Eyes", "cost": 250, "modifiers": {}, "grants": { "camoDetection": true }, "sprite": "tower_dart_2" },
-        { "name": "Twin Barrel", "cost": 350, "modifiers": { "fireRate": 2 }, "sprite": "tower_dart_3" },
-        { "name": "Bullet Storm", "cost": 900, "modifiers": { "fireRate": 4 }, "addEffects": ["multishot"], "sprite": "tower_dart_4" }
+        { "name": "Wider Sight", "cost": 90, "modifiers": { "range": 30 }, "sprite": "dart_b1" },
+        { "name": "Keen Eyes", "cost": 250, "modifiers": {}, "grants": { "camoDetection": true }, "sprite": "dart_b2" },
+        { "name": "Twin Barrel", "cost": 350, "modifiers": { "fireRate": 2 }, "sprite": "dart_b3" },
+        { "name": "Bullet Storm", "cost": 900, "modifiers": { "fireRate": 4 }, "addEffects": ["multishot"], "sprite": "dart_b4" }
       ]
     }
   ]

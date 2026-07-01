@@ -144,8 +144,10 @@ by Vite at `/sprites/*.png`), sliced from source sheets in `art/` (`styles.jpg`,
 (data-driven); the renderer loads it with nearest-neighbour scaling and falls
 back to a coloured shape when a sprite is missing. `UpgradeTier.sprite` lets a
 tower change appearance as it upgrades — the renderer shows the sprite of the
-highest reached tier (so the deep path drives the look). Core never touches
-sprites — rendering only.
+highest reached tier (so the deep path drives the look). A sprite key with
+`{key}_0.png`, `{key}_1.png`, … is loaded as an **animation**; towers play their
+current stage's fire animation once per shot (detected from the tower's cooldown
+resetting). Core never touches sprites — rendering only.
 
 ## What NOT to do (this phase)
 
