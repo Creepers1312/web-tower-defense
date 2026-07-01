@@ -1703,6 +1703,12 @@
           "count": 4,
           "spacing": 1.2,
           "delay": 3
+        },
+        {
+          "enemyId": "nallon_purple",
+          "count": 3,
+          "spacing": 1,
+          "delay": 6
         }
       ]
     },

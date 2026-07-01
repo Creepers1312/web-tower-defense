@@ -3,7 +3,7 @@
     "id": "nallon_red",
     "name": "Red Nallon",
     "hp": 1,
-    "speed": 160,
+    "speed": 90,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
@@ -14,215 +14,160 @@
     "id": "nallon_blue",
     "name": "Blue Nallon",
     "hp": 1,
-    "speed": 180,
+    "speed": 126,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#3b82f6",
     "sprite": "nallon_blue",
-    "children": [
-      {
-        "enemyId": "nallon_red",
-        "count": 1
-      }
-    ]
+    "children": [{ "enemyId": "nallon_red", "count": 1 }]
   },
   {
     "id": "nallon_green",
     "name": "Green Nallon",
     "hp": 1,
-    "speed": 200,
+    "speed": 162,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#22c55e",
     "sprite": "nallon_green",
-    "children": [
-      {
-        "enemyId": "nallon_blue",
-        "count": 1
-      }
-    ]
+    "children": [{ "enemyId": "nallon_blue", "count": 1 }]
   },
   {
     "id": "nallon_yellow",
     "name": "Yellow Nallon",
     "hp": 1,
-    "speed": 240,
+    "speed": 288,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#eab308",
     "sprite": "nallon_yellow",
-    "children": [
-      {
-        "enemyId": "nallon_green",
-        "count": 1
-      }
-    ]
+    "children": [{ "enemyId": "nallon_green", "count": 1 }]
   },
   {
     "id": "nallon_pink",
     "name": "Pink Nallon",
     "hp": 1,
-    "speed": 280,
+    "speed": 315,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#ec4899",
     "sprite": "nallon_pink",
-    "children": [
-      {
-        "enemyId": "nallon_yellow",
-        "count": 1
-      }
-    ]
-  },
-  {
-    "id": "nallon_white",
-    "name": "White Nallon",
-    "hp": 1,
-    "speed": 210,
-    "reward": 1,
-    "leakDamage": 1,
-    "flags": [],
-    "color": "#e5e7eb",
-    "sprite": "nallon_white",
-    "children": [
-      {
-        "enemyId": "nallon_pink",
-        "count": 2
-      }
-    ]
+    "children": [{ "enemyId": "nallon_yellow", "count": 1 }]
   },
   {
     "id": "nallon_black",
     "name": "Black Nallon",
     "hp": 1,
-    "speed": 210,
+    "speed": 162,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#1f2937",
     "sprite": "nallon_black",
-    "children": [
-      {
-        "enemyId": "nallon_pink",
-        "count": 2
-      }
-    ]
+    "children": [{ "enemyId": "nallon_pink", "count": 2 }]
+  },
+  {
+    "id": "nallon_white",
+    "name": "White Nallon",
+    "hp": 1,
+    "speed": 180,
+    "reward": 1,
+    "leakDamage": 1,
+    "flags": [],
+    "color": "#e5e7eb",
+    "sprite": "nallon_white",
+    "children": [{ "enemyId": "nallon_pink", "count": 2 }]
+  },
+  {
+    "id": "nallon_purple",
+    "name": "Purple Nallon",
+    "hp": 1,
+    "speed": 270,
+    "reward": 1,
+    "leakDamage": 1,
+    "flags": [],
+    "color": "#a855f7",
+    "sprite": "nallon_purple",
+    "children": [{ "enemyId": "nallon_pink", "count": 2 }]
+  },
+  {
+    "id": "nallon_lead",
+    "name": "Lead Nallon",
+    "hp": 1,
+    "speed": 90,
+    "reward": 1,
+    "leakDamage": 1,
+    "flags": ["lead"],
+    "color": "#64748b",
+    "sprite": "nallon_grey",
+    "children": [{ "enemyId": "nallon_black", "count": 2 }]
   },
   {
     "id": "nallon_zebra",
     "name": "Zebra Nallon",
     "hp": 1,
-    "speed": 210,
+    "speed": 162,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#9ca3af",
-    "sprite": "nallon_purple",
+    "sprite": "nallon_black",
     "children": [
-      {
-        "enemyId": "nallon_black",
-        "count": 1
-      },
-      {
-        "enemyId": "nallon_white",
-        "count": 1
-      }
+      { "enemyId": "nallon_black", "count": 1 },
+      { "enemyId": "nallon_white", "count": 1 }
     ]
   },
   {
     "id": "nallon_rainbow",
     "name": "Rainbow Nallon",
     "hp": 1,
-    "speed": 240,
+    "speed": 198,
     "reward": 1,
     "leakDamage": 1,
     "flags": [],
     "color": "#a855f7",
     "sprite": "nallon_rainbow",
-    "children": [
-      {
-        "enemyId": "nallon_zebra",
-        "count": 2
-      }
-    ]
+    "children": [{ "enemyId": "nallon_zebra", "count": 2 }]
   },
   {
     "id": "nallon_armored",
-    "name": "Armored Nallon",
+    "name": "Ceramic Nallon",
     "hp": 10,
-    "speed": 120,
+    "speed": 225,
     "reward": 3,
     "leakDamage": 2,
     "flags": [],
     "color": "#b45309",
     "sprite": "nallon_brown",
-    "children": [
-      {
-        "enemyId": "nallon_rainbow",
-        "count": 2
-      }
-    ]
-  },
-  {
-    "id": "nallon_lead",
-    "name": "Lead Nallon",
-    "hp": 1,
-    "speed": 210,
-    "reward": 1,
-    "leakDamage": 1,
-    "flags": [
-      "lead"
-    ],
-    "color": "#64748b",
-    "sprite": "nallon_grey",
-    "children": [
-      {
-        "enemyId": "nallon_black",
-        "count": 2
-      }
-    ]
+    "children": [{ "enemyId": "nallon_rainbow", "count": 2 }]
   },
   {
     "id": "nallon_camo",
     "name": "Camo Nallon",
     "hp": 1,
-    "speed": 200,
+    "speed": 162,
     "reward": 1,
     "leakDamage": 1,
-    "flags": [
-      "camo"
-    ],
+    "flags": ["camo"],
     "color": "#166534",
     "sprite": "nallon_green",
-    "children": [
-      {
-        "enemyId": "nallon_green",
-        "count": 1
-      }
-    ]
+    "children": [{ "enemyId": "nallon_green", "count": 1 }]
   },
   {
     "id": "nallon_regrow",
     "name": "Regrow Nallon",
     "hp": 3,
-    "speed": 170,
+    "speed": 130,
     "reward": 1,
     "leakDamage": 1,
-    "flags": [
-      "regrow"
-    ],
+    "flags": ["regrow"],
     "regrowRate": 1,
     "color": "#f472b6",
     "sprite": "nallon_green",
-    "children": [
-      {
-        "enemyId": "nallon_green",
-        "count": 1
-      }
-    ]
+    "children": [{ "enemyId": "nallon_green", "count": 1 }]
   }
 ]
