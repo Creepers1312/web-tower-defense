@@ -14,7 +14,12 @@ import type { Command } from './commands.js';
 import { applyCommand } from './commands.js';
 import { EventBus } from './events.js';
 import type { Registry } from './registry.js';
+import type { SystemContext } from './systems/context.js';
+import { spawnSystem } from './systems/spawn.js';
 import { movementSystem } from './systems/movement.js';
+import { combatSystem } from './systems/combat.js';
+import { projectileSystem } from './systems/projectile.js';
+import { waveSystem } from './systems/wave.js';
 import { createEnemyInstance } from './entities.js';
 import type { EnemyInstance, GameState, MapDef } from './types.js';
 
@@ -23,8 +28,8 @@ export interface WorldOptions {
   startLives?: number;
 }
 
-/** Build the initial, empty game state. */
-export function createInitialState(options: WorldOptions = {}): GameState {
+/** Build the initial game state for a given map. */
+export function createInitialState(mapId: string, options: WorldOptions = {}): GameState {
   return {
     money: options.startMoney ?? 650,
     lives: options.startLives ?? 100,
@@ -34,6 +39,10 @@ export function createInitialState(options: WorldOptions = {}): GameState {
     enemies: [],
     projectiles: [],
     tick: 0,
+    mapId,
+    seq: 0,
+    waveTime: 0,
+    spawned: [],
   };
 }
 
@@ -46,15 +55,13 @@ export class World {
   private readonly map: MapDef;
   private readonly events = new EventBus();
   private readonly commandQueue: Command[] = [];
-  /** Monotonic counter used to mint unique enemy ids. */
-  private enemyCounter = 0;
 
   constructor(registry: Registry, mapId: string, options: WorldOptions = {}) {
     const map = registry.getMap(mapId);
     if (!map) throw new Error(`World: unknown map "${mapId}"`);
     this.registry = registry;
     this.map = map;
-    this.state = createInitialState(options);
+    this.state = createInitialState(map.id, options);
   }
 
   // --- accessors ----------------------------------------------------------
@@ -86,15 +93,14 @@ export class World {
   /**
    * Spawn a single enemy at the start of the path.
    *
-   * NOTE (Milestone 1): this is a temporary bootstrap seam so the demo can put
-   * one enemy on the field. Once the wave system exists, spawning will be driven
-   * by the simulation itself in response to a StartWave command.
+   * Wave spawning is normally driven by the simulation (see spawnSystem); this
+   * helper remains handy for tests and one-off scripted spawns.
    */
   spawnEnemy(enemyId: string): EnemyInstance {
     const def = this.registry.getEnemy(enemyId);
     if (!def) throw new Error(`World: unknown enemy "${enemyId}"`);
     const start = this.map.path[0] ?? { x: 0, y: 0 };
-    const enemy = createEnemyInstance(def, `e${this.enemyCounter++}`, start);
+    const enemy = createEnemyInstance(def, `e${this.state.seq++}`, start);
     this.state.enemies.push(enemy);
     return enemy;
   }
@@ -113,13 +119,20 @@ export class World {
       if (cmd) applyCommand(this.state, this.registry, cmd, this.events);
     }
 
-    // 2. systems (Milestone 1: movement only)
-    movementSystem({
+    // 2. systems (order matters: spawn → move → target → resolve → bookkeeping)
+    const ctx: SystemContext = {
+      world: this,
       state: this.state,
+      registry: this.registry,
       map: this.map,
       dt: World.TIMESTEP,
       events: this.events,
-    });
+    };
+    spawnSystem(ctx);
+    movementSystem(ctx);
+    combatSystem(ctx);
+    projectileSystem(ctx);
+    waveSystem(ctx);
 
     // 3. advance the clock
     this.state.tick += 1;

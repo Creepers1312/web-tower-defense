@@ -65,3 +65,22 @@ export function effectiveStats(def: TowerDef, tower: TowerInstance): {
 
   return { range, fireRate, damage };
 }
+
+/**
+ * The list of effect names a tower currently has: its base effects plus every
+ * effect added by a purchased upgrade tier. Order is preserved and duplicates
+ * are removed (first occurrence wins).
+ */
+export function activeEffects(def: TowerDef, tower: TowerInstance): string[] {
+  const names: string[] = [...def.effects];
+
+  for (let path = 0 as 0 | 1; path <= 1; path = (path + 1) as 0 | 1) {
+    const level = tower.tiers[path];
+    for (let t = 0; t < level; t++) {
+      const added = def.paths[path].tiers[t].addEffects;
+      if (added) names.push(...added);
+    }
+  }
+
+  return [...new Set(names)];
+}

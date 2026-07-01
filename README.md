@@ -8,22 +8,33 @@ minimal vertical slice.
 > See [`CLAUDE.md`](./CLAUDE.md) for the architecture principles, data contracts,
 > and the guardrails that keep the structure stable across sessions.
 
-## Milestone 1
+## Status
 
-A minimal but complete vertical slice:
+**Milestone 1 (done)** — the foundation vertical slice:
 
-- A runnable pnpm-workspaces monorepo.
-- All game types / data contracts defined in `@td/core`.
-- One example map + one example enemy defined as JSON in `@td/content`.
-- A `World` with a fixed 1/60 s timestep and a single `movementSystem` that
-  moves enemies along the map path.
-- A `PixiRenderer` that reads the read-only state and draws one enemy following
-  the path (placeholder coloured shapes only).
-- Tests proving the enemy moves correctly along the path over time
-  (plus the `canUpgrade` upgrade-rule tests).
+- A runnable pnpm-workspaces monorepo with all data contracts in `@td/core`.
+- An example map + enemy as JSON in `@td/content`.
+- A `World` with a fixed 1/60 s timestep and the `movementSystem`.
+- A `PixiRenderer` that reads read-only state and draws enemies following the path.
 
-**Acceptance:** `pnpm dev` shows exactly one enemy walking the map path in the
-browser; `pnpm test` passes.
+**Milestone 2 (done)** — the full core gameplay loop:
+
+- **Wave spawning** — `StartWave` releases a wave's enemies over time
+  (`delay`/`spacing`), with automatic wave completion and win/lose transitions.
+- **Tower placement** — click to place towers, validated against buildable zones,
+  the path, and other towers.
+- **Combat** — towers acquire targets (`first`/`last`/`close`/`strong`), fire
+  projectiles, and deal damage through composable **effects**.
+- **Economy** — kills grant money, leaks cost lives, towers can be upgraded
+  (two paths × four tiers) or sold for a refund.
+- **Client HUD** — money/lives/wave, a tower palette, click-to-place, and a
+  selection panel to upgrade, sell, and set targeting.
+
+Tests cover movement, `canUpgrade`, spawn timing/count, economy, wave lifecycle,
+and placement.
+
+**Run it:** `pnpm dev`, place a few towers, press **Start Wave**, and defend.
+`pnpm test` is green.
 
 ## Tech stack
 
