@@ -32,12 +32,21 @@ async function main(): Promise<void> {
   let previous = performance.now();
   let accumulator = 0;
 
+  // Cap steps per frame so high speed (or a stall) can't spiral the loop.
+  const MAX_STEPS_PER_FRAME = 600;
+
   const frame = (now: number): void => {
-    accumulator += Math.min(now - previous, MAX_FRAME_MS);
+    const delta = Math.min(now - previous, MAX_FRAME_MS);
     previous = now;
-    while (accumulator >= STEP_MS) {
-      world.step();
-      accumulator -= STEP_MS;
+    const { paused, speed } = hud.loopState();
+    if (!paused) {
+      accumulator += delta * speed; // speed scales simulated time
+      let steps = 0;
+      while (accumulator >= STEP_MS && steps < MAX_STEPS_PER_FRAME) {
+        world.step();
+        accumulator -= STEP_MS;
+        steps++;
+      }
     }
     renderer.render(hud.view());
     hud.update();
