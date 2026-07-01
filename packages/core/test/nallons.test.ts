@@ -192,6 +192,7 @@ describe('towerCapabilities', () => {
     cooldown: 0,
     abilityCooldown: 0,
     abilityActive: 0,
+    pops: 0,
   });
 
   it('reflects base and tier-granted capabilities', () => {

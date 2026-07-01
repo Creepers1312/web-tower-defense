@@ -24,8 +24,8 @@
       #game {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 220px;
-        /* row 2 (the board) flexes; the rest size to content */
-        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        /* board row flexes; footer + hint size to content (no header) */
+        grid-template-rows: minmax(0, 1fr) auto auto;
         gap: 10px;
         padding: 12px;
         box-sizing: border-box;
@@ -366,21 +366,38 @@
       .up-tile .up-tip .up-tip-cost {
         color: #fde047;
       }
+
+      /* Sidebar money/lives (moved out of the removed header) + round line. */
+      #sideStats {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 15px;
+      }
+      #sideStats .stat b {
+        color: #f8fafc;
+      }
+      #roundInfo {
+        font-size: 12px;
+        margin: 6px 0 4px;
+      }
+      /* Muted audio toggles are dimmed. */
+      .footer-util button.muted {
+        opacity: 0.55;
+      }
     </style>
   </head>
   <body>
     <div id="game">
-      <div id="topbar">
-        <span class="stat">💰 <b id="money">0</b></span>
-        <span class="stat"><img class="hud-icon" src="/sprites/heart.png" alt="lives" /> <b id="lives">0</b></span>
-        <span class="stat">🌊 Wave <b id="wave">0</b></span>
-        <span class="stat">Phase: <b id="phase">—</b></span>
-      </div>
-
       <div id="app"></div>
 
       <div id="sidebar">
         <div class="panel" id="towerPanel">
+          <div id="sideStats">
+            <span class="stat">💰 <b id="money">0</b></span>
+            <span class="stat"><img class="hud-icon" src="/sprites/heart.png" alt="lives" /> <b id="lives">0</b></span>
+          </div>
+          <div id="roundInfo" class="muted">Round <b id="wave">0</b> · <b id="phase">—</b></div>
           <h2>Towers</h2>
           <div id="palette"></div>
           <div id="waveControls">
@@ -434,6 +451,8 @@
 
         <!-- Persistent utility cluster (the "home" corner): always visible. -->
         <div class="footer-util">
+          <button id="musicMute" title="Toggle music">🎵</button>
+          <button id="sfxMute" title="Toggle sound effects">🔊</button>
           <button id="pauseBtn">⏸ Pause</button>
           <button id="autoBtn">Auto: off</button>
         </div>

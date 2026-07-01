@@ -188,6 +188,8 @@ export interface TowerInstance {
   abilityCooldown: number;
   /** Seconds of ability buff remaining (0 = not active). */
   abilityActive: number;
+  /** Number of enemies this tower has popped (for the "Pop Count" display). */
+  pops: number;
 }
 
 export interface EnemyInstance {

@@ -50,5 +50,6 @@ export function createTowerInstance(
     cooldown: 0,
     abilityCooldown: 0,
     abilityActive: 0,
+    pops: 0,
   };
 }

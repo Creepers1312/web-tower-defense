@@ -77,6 +77,7 @@ function hitEnemy(
     enemy.hp = 0;
     enemy.alive = false;
     state.money += enemy.reward;
+    if (tower) tower.pops += 1; // credit the popping tower (Pop Count display)
     events.emit('onEnemyKilled', { enemyId: enemy.id, reward: enemy.reward });
     popInto(ctx, enemy);
   }
