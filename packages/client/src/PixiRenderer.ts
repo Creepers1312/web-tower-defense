@@ -53,6 +53,8 @@ export interface RenderView {
 interface EntityNode {
   root: Container;
   overlay: Graphics;
+  /** Sprite key of the current body, so we can swap it when it changes. */
+  spriteKey?: string;
 }
 
 export class PixiRenderer {
@@ -107,7 +109,10 @@ export class PixiRenderer {
   private async loadSprites(): Promise<void> {
     const keys = new Set<string>();
     for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
-    for (const t of this.registry.allTowers()) if (t.sprite) keys.add(t.sprite);
+    for (const t of this.registry.allTowers()) {
+      if (t.sprite) keys.add(t.sprite);
+      for (const path of t.paths) for (const tier of path.tiers) if (tier.sprite) keys.add(tier.sprite);
+    }
 
     await Promise.all(
       [...keys].map(async (key) => {
@@ -159,23 +164,50 @@ export class PixiRenderer {
     this.drawGhost(view);
   }
 
+  /** The sprite key for a tower's current look: the highest reached upgrade
+   *  tier that defines a sprite (so the deep path drives the appearance),
+   *  falling back to the base tower sprite. */
+  private currentTowerSprite(towerId: string): string | undefined {
+    const tower = this.world.getState().towers.find((t) => t.id === towerId);
+    if (!tower) return undefined;
+    const def = this.registry.getTower(tower.type);
+    if (!def) return undefined;
+    let bestIdx = -1;
+    let bestSprite = def.sprite;
+    for (let p = 0 as 0 | 1; p <= 1; p = (p + 1) as 0 | 1) {
+      const level = tower.tiers[p];
+      for (let t = 0; t < level; t++) {
+        const s = def.paths[p].tiers[t].sprite;
+        if (s && t > bestIdx) {
+          bestIdx = t;
+          bestSprite = s;
+        }
+      }
+    }
+    return bestSprite;
+  }
+
   private syncTowers(selectedId: string | null): void {
     const towers = this.world.getState().towers;
     const seen = new Set<string>();
     for (const tower of towers) {
       seen.add(tower.id);
+      const wantKey = this.currentTowerSprite(tower.id);
       let node = this.towerNodes.get(tower.id);
       if (!node) {
-        const root = new Container();
-        const def = this.registry.getTower(tower.type);
-        const body =
-          this.makeSprite(def?.sprite, TOWER_RADIUS * 2) ??
-          new Graphics().circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
-        const overlay = new Graphics();
-        root.addChild(body, overlay);
-        this.towerLayer.addChild(root);
-        node = { root, overlay };
+        node = { root: new Container(), overlay: new Graphics() };
+        this.towerLayer.addChild(node.root);
         this.towerNodes.set(tower.id, node);
+      }
+      // (Re)build the body when the tower is new or its sprite changed.
+      if (node.spriteKey !== wantKey || node.root.children.length === 0) {
+        node.root.removeChildren().forEach((c) => c.destroy());
+        const body =
+          this.makeSprite(wantKey, TOWER_RADIUS * 2) ??
+          new Graphics().circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
+        node.overlay = new Graphics();
+        node.root.addChild(body, node.overlay);
+        node.spriteKey = wantKey;
       }
       node.overlay.clear();
       if (tower.id === selectedId) {

@@ -64,7 +64,7 @@ These fields must exist (extensions are fine, but do not remove/rename these):
   Optional capabilities: `camoDetection?`, `popsLead?`.
 - **UpgradePath**: `tiers: [UpgradeTier x4]` (exactly four).
 - **UpgradeTier**: `name, cost, modifiers: Partial<{range, fireRate, damage}>`,
-  `addEffects?: string[]`, `grants?: {camoDetection?, popsLead?}`.
+  `addEffects?: string[]`, `grants?: {camoDetection?, popsLead?}`, `sprite?`.
 - **EnemyDef**: `id, name, hp, speed` (units/sec), `reward`, `leakDamage`,
   `flags: string[]` (e.g. `'camo'`, `'lead'`, `'regrow'`). Optional:
   `children?: {enemyId, count}[]` (spawned when popped), `regrowRate?`, `color?`.
@@ -139,10 +139,13 @@ Original placeholder theme only (coined term "Nallon"); no Ninja Kiwi names/art.
 ## Placeholder art (client only)
 
 Original pixel-art placeholders live in `packages/client/public/sprites/` (served
-by Vite at `/sprites/*.png`), sliced from the source sheet `art/styles.jpg`.
-`EnemyDef.sprite` / `TowerDef.sprite` name a sprite key (data-driven); the
-renderer loads it with nearest-neighbour scaling and falls back to a coloured
-shape when a sprite is missing. Core never touches sprites — rendering only.
+by Vite at `/sprites/*.png`), sliced from source sheets in `art/` (`styles.jpg`,
+`dart-tower.png`). `EnemyDef.sprite` / `TowerDef.sprite` name a sprite key
+(data-driven); the renderer loads it with nearest-neighbour scaling and falls
+back to a coloured shape when a sprite is missing. `UpgradeTier.sprite` lets a
+tower change appearance as it upgrades — the renderer shows the sprite of the
+highest reached tier (so the deep path drives the look). Core never touches
+sprites — rendering only.
 
 ## What NOT to do (this phase)
 
