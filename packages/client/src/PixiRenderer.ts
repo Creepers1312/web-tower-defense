@@ -50,6 +50,29 @@ function parseColor(hex: string | undefined, fallback: number): number {
   return Number.isNaN(n) ? fallback : n;
 }
 
+/** Draw a placeholder spiky ball (dark body + black triangular spikes). */
+function drawSpikyBall(g: Graphics, radius: number, spikes = 8): Graphics {
+  const spike = radius * 0.9;
+  for (let i = 0; i < spikes; i++) {
+    const a = (i / spikes) * Math.PI * 2;
+    const perp = a + Math.PI / 2;
+    const bx = Math.cos(a) * radius;
+    const by = Math.sin(a) * radius;
+    const w = radius * 0.4;
+    g.poly([
+      bx - Math.cos(perp) * w,
+      by - Math.sin(perp) * w,
+      bx + Math.cos(perp) * w,
+      by + Math.sin(perp) * w,
+      bx + Math.cos(a) * (radius + spike),
+      by + Math.sin(a) * (radius + spike),
+    ]).fill(0x111827);
+  }
+  g.circle(0, 0, radius).fill(0x374151);
+  g.circle(0, 0, radius).stroke({ width: 1, color: 0x111827 });
+  return g;
+}
+
 /** What the renderer should highlight this frame (selection / placement ghost). */
 export interface RenderView {
   selectedTowerId: string | null;
@@ -80,7 +103,7 @@ export class PixiRenderer {
 
   private readonly towerNodes = new Map<string, EntityNode>();
   private readonly enemyNodes = new Map<string, EntityNode>();
-  private readonly projectileGfx = new Map<string, Graphics>();
+  private readonly projectileNodes = new Map<string, { obj: Container; kind: string }>();
   /** One or more textures per sprite key (multiple → an animation). */
   private readonly animations = new Map<string, Texture[]>();
   private readonly range = new Graphics();
@@ -121,7 +144,7 @@ export class PixiRenderer {
    *  A key with `{key}_0.png`, `{key}_1.png`, … becomes an animation; otherwise
    *  a single `{key}.png` is loaded. */
   private async loadSprites(): Promise<void> {
-    const keys = new Set<string>();
+    const keys = new Set<string>(['proj_dart']); // projectile sprite (not in defs)
     for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
     for (const t of this.registry.allTowers()) {
       if (t.sprite) keys.add(t.sprite);
@@ -327,24 +350,60 @@ export class PixiRenderer {
     this.reapNodes(this.enemyNodes, seen, this.enemyLayer);
   }
 
-  private syncProjectiles(): void {
-    const projectiles = this.world.getState().projectiles;
-    const seen = new Set<string>();
-    for (const p of projectiles) {
-      seen.add(p.id);
-      let g = this.projectileGfx.get(p.id);
-      if (!g) {
-        g = new Graphics().circle(0, 0, 3).fill(COLORS.projectile);
-        this.projectileLayer.addChild(g);
-        this.projectileGfx.set(p.id, g);
+  /** Which projectile look a shot uses, based on the firing tower's stage.
+   *  Catapult stages throw balls; everything else throws the dart. */
+  private projectileKind(sourceTowerId: string): 'dart' | 'a2' | 'a3' | 'a4' {
+    const key = this.currentTowerSprite(sourceTowerId);
+    if (key === 'dart_a2') return 'a2';
+    if (key === 'dart_a3') return 'a3';
+    if (key === 'dart_a4') return 'a4';
+    return 'dart';
+  }
+
+  /** Build the display object for a projectile of the given kind. */
+  private makeProjectile(kind: 'dart' | 'a2' | 'a3' | 'a4'): Container {
+    if (kind === 'dart') {
+      const tex = this.animations.get('proj_dart')?.[0];
+      if (tex) {
+        const s = new Sprite(tex);
+        s.anchor.set(0.5);
+        s.scale.set(24 / tex.width); // dart ~24px long
+        return s;
       }
-      g.position.set(p.pos.x, p.pos.y);
+      return new Graphics().circle(0, 0, 3).fill(COLORS.projectile);
     }
-    for (const [id, g] of this.projectileGfx) {
+    // Drawn spiky ball (placeholder), bigger for higher tiers.
+    const radius = kind === 'a2' ? 5 : kind === 'a3' ? 6 : 7;
+    return drawSpikyBall(new Graphics(), radius);
+  }
+
+  private syncProjectiles(): void {
+    const state = this.world.getState();
+    const seen = new Set<string>();
+    for (const p of state.projectiles) {
+      seen.add(p.id);
+      let node = this.projectileNodes.get(p.id);
+      if (!node) {
+        const kind = this.projectileKind(p.source);
+        const obj = this.makeProjectile(kind);
+        this.projectileLayer.addChild(obj);
+        node = { obj, kind };
+        this.projectileNodes.set(p.id, node);
+      }
+      node.obj.position.set(p.pos.x, p.pos.y);
+      // Point the dart in its direction of travel (toward its target).
+      if (node.kind === 'dart') {
+        const target = state.enemies.find((e) => e.id === p.target && e.alive);
+        if (target) {
+          node.obj.rotation = Math.atan2(target.pos.y - p.pos.y, target.pos.x - p.pos.x);
+        }
+      }
+    }
+    for (const [id, node] of this.projectileNodes) {
       if (!seen.has(id)) {
-        this.projectileLayer.removeChild(g);
-        g.destroy();
-        this.projectileGfx.delete(id);
+        this.projectileLayer.removeChild(node.obj);
+        node.obj.destroy();
+        this.projectileNodes.delete(id);
       }
     }
   }
