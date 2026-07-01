@@ -31,7 +31,9 @@ import {
 } from '@td/core';
 
 export const VIEW_WIDTH = 800;
-export const VIEW_HEIGHT = 600;
+// The meadow path runs down to y≈660 (its exit), so the view must be at least
+// that tall or the bottom of the track gets clipped off-screen.
+export const VIEW_HEIGHT = 660;
 
 const COLORS = {
   background: 0x1e293b,
