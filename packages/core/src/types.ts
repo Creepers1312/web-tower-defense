@@ -45,6 +45,14 @@ export type StatModifiers = Partial<{
   damage: number;
 }>;
 
+/** Special capabilities a tower can have (base or unlocked by an upgrade tier). */
+export type TowerCapabilities = Partial<{
+  /** Can target camo enemies. */
+  camoDetection: boolean;
+  /** Can damage lead enemies. */
+  popsLead: boolean;
+}>;
+
 export interface UpgradeTier {
   name: string;
   cost: number;
@@ -52,6 +60,8 @@ export interface UpgradeTier {
   modifiers: StatModifiers;
   /** Effects (by registered name) that this tier adds to the tower. */
   addEffects?: string[];
+  /** Capabilities this tier unlocks (e.g. camo detection, lead popping). */
+  grants?: TowerCapabilities;
 }
 
 /** A single upgrade branch: exactly four tiers. */
@@ -71,8 +81,17 @@ export interface TowerDef {
   targeting: TargetingMode;
   /** Names of registered effects that fire when the tower attacks. */
   effects: string[];
+  /** Base special capabilities (may be extended by upgrade tiers). */
+  camoDetection?: boolean;
+  popsLead?: boolean;
   /** Exactly two upgrade paths. */
   paths: [UpgradePath, UpgradePath];
+}
+
+/** A child spawned when a parent enemy is popped (the Nallon hierarchy). */
+export interface EnemyChild {
+  enemyId: string;
+  count: number;
 }
 
 export interface EnemyDef {
@@ -85,8 +104,14 @@ export interface EnemyDef {
   reward: number;
   /** Lives lost by the player when this enemy reaches the end of the path. */
   leakDamage: number;
-  /** Open-ended tags, e.g. 'camo'. Kept as strings so content stays extensible. */
+  /** Open-ended tags, e.g. 'camo', 'lead', 'regrow'. */
   flags: string[];
+  /** Enemies spawned (at the parent's position) when this one is popped. */
+  children?: EnemyChild[];
+  /** Hp regenerated per second while damaged (used when 'regrow' flag is set). */
+  regrowRate?: number;
+  /** Placeholder render colour ('#rrggbb'). Interpreted only by the renderer. */
+  color?: string;
 }
 
 export interface WaveEntry {
@@ -145,6 +170,8 @@ export interface EnemyInstance {
   leakDamage: number;
   /** Money granted on kill (copied from the def). */
   reward: number;
+  /** Hp regenerated per second while damaged (0 if not a regrow enemy). */
+  regrowRate: number;
   flags: string[];
   alive: boolean;
 }
@@ -160,6 +187,8 @@ export interface ProjectileInstance {
   source: string;
   /** Effect names to run on impact (snapshot of the tower's active effects). */
   effects: string[];
+  /** Whether this shot can damage lead enemies (snapshot at fire time). */
+  popsLead: boolean;
 }
 
 export type GamePhase = 'building' | 'wave' | 'won' | 'lost';

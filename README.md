@@ -30,8 +30,19 @@ minimal vertical slice.
 - **Client HUD** — money/lives/wave, a tower palette, click-to-place, and a
   selection panel to upgrade, sell, and set targeting.
 
+**Milestone 3 (done)** — the Nallon enemy hierarchy:
+
+- **Hierarchy** — enemies ("Nallons") split into `children` when popped, e.g.
+  green → blue → red (the classic RBE cascade), all defined as data.
+- **Special properties** — `camo` (needs camo-detecting towers), `lead` (needs
+  lead-popping towers), and `regrow` (heals over time); children inherit camo/regrow.
+- **Tower capabilities** — `camoDetection` and `popsLead`, unlockable through
+  upgrade tiers, let towers counter those Nallons.
+- All content-driven: new Nallons/towers are JSON only. Original placeholders
+  (coloured circles with camo/lead/regrow indicators); no third-party assets/names.
+
 Tests cover movement, `canUpgrade`, spawn timing/count, economy, wave lifecycle,
-and placement.
+placement, hierarchy split + inheritance, camo targeting, lead immunity, and regrow.
 
 **Run it:** `pnpm dev`, place a few towers, press **Start Wave**, and defend.
 `pnpm test` is green.

@@ -7,19 +7,21 @@
   "damage": 1,
   "targeting": "first",
   "effects": ["directDamage"],
+  "camoDetection": false,
+  "popsLead": false,
   "paths": [
     {
       "tiers": [
         { "name": "Sharper Pellets", "cost": 80, "modifiers": { "damage": 1 } },
         { "name": "Faster Trigger", "cost": 120, "modifiers": { "fireRate": 1 } },
-        { "name": "Long Barrel", "cost": 300, "modifiers": { "range": 40, "damage": 1 } },
+        { "name": "Lead Piercer", "cost": 320, "modifiers": { "range": 20, "damage": 1 }, "grants": { "popsLead": true } },
         { "name": "Piercing Rounds", "cost": 800, "modifiers": { "damage": 3 }, "addEffects": ["pierce"] }
       ]
     },
     {
       "tiers": [
         { "name": "Wider Sight", "cost": 90, "modifiers": { "range": 30 } },
-        { "name": "Rapid Fire", "cost": 150, "modifiers": { "fireRate": 2 } },
+        { "name": "Keen Eyes", "cost": 250, "modifiers": {}, "grants": { "camoDetection": true } },
         { "name": "Twin Barrel", "cost": 350, "modifiers": { "fireRate": 2 } },
         { "name": "Bullet Storm", "cost": 900, "modifiers": { "fireRate": 4 }, "addEffects": ["multishot"] }
       ]

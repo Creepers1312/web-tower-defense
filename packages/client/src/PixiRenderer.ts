@@ -16,6 +16,9 @@ const COLORS = {
   background: 0x1e293b,
   path: 0x475569,
   enemy: 0xef4444,
+  lead: 0x9ca3af,
+  camoRing: 0x16a34a,
+  regrowRing: 0xf472b6,
   enemyHpBg: 0x1f2937,
   enemyHp: 0x22c55e,
   tower: 0x38bdf8,
@@ -29,6 +32,13 @@ const COLORS = {
 const ENEMY_RADIUS = 12;
 const TOWER_RADIUS = 13;
 const PATH_WIDTH = 34;
+
+/** Parse a '#rrggbb' string to a numeric colour, falling back on error. */
+function parseColor(hex: string | undefined, fallback: number): number {
+  if (!hex || hex[0] !== '#') return fallback;
+  const n = Number.parseInt(hex.slice(1), 16);
+  return Number.isNaN(n) ? fallback : n;
+}
 
 /** What the renderer should highlight this frame (selection / placement ghost). */
 export interface RenderView {
@@ -145,8 +155,18 @@ export class PixiRenderer {
         this.enemyGfx.set(enemy.id, g);
       }
       const frac = enemy.maxHp > 0 ? Math.max(0, enemy.hp / enemy.maxHp) : 0;
+      const def = this.registry.getEnemy(enemy.type);
+      const isLead = enemy.flags.includes('lead');
+      const body = isLead ? COLORS.lead : parseColor(def?.color, COLORS.enemy);
       g.clear();
-      g.circle(0, 0, ENEMY_RADIUS).fill(COLORS.enemy);
+      g.circle(0, 0, ENEMY_RADIUS).fill(body);
+      // Flag indicators: camo (green ring), regrow (pink ring).
+      if (enemy.flags.includes('camo')) {
+        g.circle(0, 0, ENEMY_RADIUS + 2).stroke({ width: 2, color: COLORS.camoRing });
+      }
+      if (enemy.flags.includes('regrow')) {
+        g.circle(0, 0, ENEMY_RADIUS + 4).stroke({ width: 2, color: COLORS.regrowRing });
+      }
       // HP bar above the enemy.
       const w = 22;
       g.rect(-w / 2, -ENEMY_RADIUS - 8, w, 4).fill(COLORS.enemyHpBg);

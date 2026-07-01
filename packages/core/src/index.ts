@@ -11,10 +11,12 @@ export type {
   Rect,
   TargetingMode,
   StatModifiers,
+  TowerCapabilities,
   UpgradeTier,
   UpgradePath,
   TowerDef,
   EnemyDef,
+  EnemyChild,
   WaveEntry,
   Wave,
   MapDef,
@@ -50,7 +52,14 @@ export type {
 } from './commands.js';
 
 // Upgrade rules
-export { canUpgrade, nextTierCost, effectiveStats, activeEffects } from './upgrade.js';
+export {
+  canUpgrade,
+  nextTierCost,
+  effectiveStats,
+  activeEffects,
+  towerCapabilities,
+} from './upgrade.js';
+export type { ResolvedCapabilities } from './upgrade.js';
 
 // Entities
 export { createEnemyInstance, createTowerInstance } from './entities.js';
@@ -75,6 +84,7 @@ export { spawnSystem } from './systems/spawn.js';
 export { movementSystem } from './systems/movement.js';
 export { combatSystem, selectTarget, PROJECTILE_SPEED } from './systems/combat.js';
 export { projectileSystem, HIT_RADIUS } from './systems/projectile.js';
+export { regrowSystem, regrowEnemy } from './systems/regrow.js';
 export { waveSystem } from './systems/wave.js';
 
 // World

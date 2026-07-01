@@ -8,6 +8,11 @@
 
 import type { StatModifiers, TowerDef, TowerInstance } from './types.js';
 
+export interface ResolvedCapabilities {
+  camoDetection: boolean;
+  popsLead: boolean;
+}
+
 /** The path index not equal to `path`. */
 function otherPath(path: 0 | 1): 0 | 1 {
   return path === 0 ? 1 : 0;
@@ -83,4 +88,24 @@ export function activeEffects(def: TowerDef, tower: TowerInstance): string[] {
   }
 
   return [...new Set(names)];
+}
+
+/**
+ * A tower's current special capabilities: its base capabilities plus every
+ * capability granted by a purchased upgrade tier.
+ */
+export function towerCapabilities(def: TowerDef, tower: TowerInstance): ResolvedCapabilities {
+  let camoDetection = def.camoDetection ?? false;
+  let popsLead = def.popsLead ?? false;
+
+  for (let path = 0 as 0 | 1; path <= 1; path = (path + 1) as 0 | 1) {
+    const level = tower.tiers[path];
+    for (let t = 0; t < level; t++) {
+      const grants = def.paths[path].tiers[t].grants;
+      if (grants?.camoDetection) camoDetection = true;
+      if (grants?.popsLead) popsLead = true;
+    }
+  }
+
+  return { camoDetection, popsLead };
 }
