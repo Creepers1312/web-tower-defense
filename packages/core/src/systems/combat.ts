@@ -107,28 +107,48 @@ export function combatSystem(ctx: SystemContext): void {
     stats.damage *= buff.damage;
     stats.range *= buff.range;
     const caps = towerCapabilities(def, tower);
-
-    // Pick one enemy to aim at; darts then fly straight along that heading.
-    const target = selectTarget(tower.pos, stats.range, tower.targeting, state.enemies, caps.camoDetection);
-    if (!target) {
-      tower.cooldown = 0; // stay ready so we fire as soon as a target appears
-      continue;
-    }
-
-    // Lead the target: aim where it will be when the dart arrives, not where it
-    // is now (straight darts otherwise trail fast movers and miss).
-    const aim = predictAim(tower.pos, target, map.path, PROJECTILE_SPEED);
-    const baseAngle = Math.atan2(aim.y - tower.pos.y, aim.x - tower.pos.x);
     const shots = Math.max(1, Math.round(stats.shots));
     const pops = Math.max(1, Math.round(stats.pierce) + 1);
-    const aimDist = Math.hypot(aim.x - tower.pos.x, aim.y - tower.pos.y);
-    // Fly far enough to reach the (possibly led) aim point, plus a little beyond.
-    const maxDist = Math.max(stats.range, aimDist) + PROJECTILE_RANGE_MARGIN;
     const effects = activeEffects(def, tower);
+    const radial = def.fireMode === 'radial';
 
-    // Fire a symmetric fan of straight darts centred on the aim direction.
+    // Determine the firing heading. Radial towers (tack shooters) fire in all
+    // directions as long as any enemy is in range; aimed towers lead a target.
+    let baseAngle: number;
+    let spread: number;
+    let maxDist: number;
+    if (radial) {
+      const inRange = selectTarget(
+        tower.pos,
+        stats.range,
+        tower.targeting,
+        state.enemies,
+        caps.camoDetection,
+      );
+      if (!inRange) {
+        tower.cooldown = 0;
+        continue;
+      }
+      baseAngle = 0;
+      spread = (Math.PI * 2) / shots; // evenly around the circle
+      maxDist = stats.range + PROJECTILE_RANGE_MARGIN;
+    } else {
+      const target = selectTarget(tower.pos, stats.range, tower.targeting, state.enemies, caps.camoDetection);
+      if (!target) {
+        tower.cooldown = 0; // stay ready so we fire as soon as a target appears
+        continue;
+      }
+      // Lead the target: aim where it will be when the shot arrives.
+      const aim = predictAim(tower.pos, target, map.path, PROJECTILE_SPEED);
+      baseAngle = Math.atan2(aim.y - tower.pos.y, aim.x - tower.pos.x);
+      spread = SHOT_SPREAD;
+      const aimDist = Math.hypot(aim.x - tower.pos.x, aim.y - tower.pos.y);
+      maxDist = Math.max(stats.range, aimDist) + PROJECTILE_RANGE_MARGIN;
+    }
+
+    // Fire the shots: a full ring for radial, a symmetric fan for aimed towers.
     for (let i = 0; i < shots; i++) {
-      const angle = baseAngle + (i - (shots - 1) / 2) * SHOT_SPREAD;
+      const angle = radial ? i * spread : baseAngle + (i - (shots - 1) / 2) * spread;
       state.projectiles.push({
         id: `p${state.seq++}`,
         pos: { x: tower.pos.x, y: tower.pos.y },

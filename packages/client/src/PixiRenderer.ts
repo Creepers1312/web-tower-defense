@@ -445,9 +445,10 @@ export class PixiRenderer {
       node.prevCooldown = tower.cooldown;
 
       // Aim the sprite at the current target (sprites are drawn facing right).
-      // Flip vertically when aiming left so the monkey stays upright.
+      // Flip vertically when aiming left so the monkey stays upright. Radial
+      // towers (tack shooters) fire in all directions, so they stay upright.
       const def = this.registry.getTower(tower.type);
-      if (def && node.body) {
+      if (def && def.fireMode !== 'radial' && node.body) {
         const stats = effectiveStats(def, tower);
         const caps = towerCapabilities(def, tower);
         const target = selectTarget(

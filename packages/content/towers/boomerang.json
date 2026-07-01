@@ -1,0 +1,55 @@
+{
+  "id": "tower_boomerang",
+  "name": "Boomerang Thrower",
+  "cost": 180,
+  "range": 130,
+  "fireRate": 1,
+  "damage": 1,
+  "pierce": 2,
+  "targeting": "first",
+  "effects": ["directDamage"],
+  "sprite": "boom_base",
+  "paths": [
+    {
+      "tiers": [
+        { "name": "Multi-Target", "cost": 200, "modifiers": { "pierce": 4 } },
+        { "name": "Glaive Thrower", "cost": 400, "modifiers": { "damage": 1, "pierce": 2 }, "sprite": "boom_a2" },
+        { "name": "Glaive Ricochet", "cost": 900, "modifiers": { "pierce": 6 }, "sprite": "boom_a3" },
+        {
+          "name": "Glaive Lord",
+          "cost": 2500,
+          "modifiers": { "damage": 2, "pierce": 6 },
+          "grants": { "camoDetection": true },
+          "sprite": "boom_a4"
+        }
+      ]
+    },
+    {
+      "tiers": [
+        { "name": "Sonic Boom", "cost": 300, "modifiers": { "range": 15 } },
+        {
+          "name": "Red Hot 'Rangs",
+          "cost": 500,
+          "modifiers": { "damage": 1 },
+          "grants": { "popsLead": true },
+          "sprite": "boom_b2"
+        },
+        { "name": "Bionic Boomer", "cost": 1200, "modifiers": { "fireRate": 1 }, "sprite": "boom_b3" },
+        {
+          "name": "Turbo Charge",
+          "cost": 3000,
+          "modifiers": { "fireRate": 1 },
+          "ability": {
+            "id": "turbo_charge",
+            "name": "Turbo Charge",
+            "duration": 10,
+            "cooldown": 45,
+            "radius": 1,
+            "buff": { "fireRate": 3 }
+          },
+          "sprite": "boom_b4"
+        }
+      ]
+    }
+  ]
+}

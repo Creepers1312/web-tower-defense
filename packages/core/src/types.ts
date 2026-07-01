@@ -110,6 +110,13 @@ export interface TowerDef {
   targeting: TargetingMode;
   /** Names of registered effects that fire when the tower attacks. */
   effects: string[];
+  /** Base extra enemies a single shot pierces (0 = hits one). */
+  pierce?: number;
+  /** Base projectiles fired per shot (default 1). */
+  shots?: number;
+  /** How the tower fires: aimed at a target (default) or evenly in all
+   *  directions (radial — e.g. a tack shooter). */
+  fireMode?: 'targeted' | 'radial';
   /** Base special capabilities (may be extended by upgrade tiers). */
   camoDetection?: boolean;
   popsLead?: boolean;
