@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    /* Language / module system */
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
+    /* Strict mode: the whole point of this base config */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Output hygiene */
+    "declaration": true,
+    "sourceMap": true,
+    "skipLibCheck": true
+  }
+}
