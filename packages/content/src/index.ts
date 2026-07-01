@@ -19,6 +19,7 @@ import pellet from '../towers/pellet.json';
 import boomerang from '../towers/boomerang.json';
 import nail from '../towers/nail.json';
 import meadow from '../maps/meadow.json';
+import dunes from '../maps/dunes.json';
 
 export const enemies: EnemyDef[] = [
   runner as unknown as EnemyDef,
@@ -29,7 +30,10 @@ export const towers: TowerDef[] = [
   boomerang as unknown as TowerDef,
   nail as unknown as TowerDef,
 ];
-export const maps: MapDef[] = [meadow as unknown as MapDef];
+export const maps: MapDef[] = [
+  meadow as unknown as MapDef,
+  dunes as unknown as MapDef,
+];
 
 /** Register every bundled definition into the given registry. */
 export const contentAddon: Addon = (reg) => {

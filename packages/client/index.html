@@ -385,6 +385,59 @@
       .footer-util button.muted {
         opacity: 0.55;
       }
+
+      /* Start menu / game-over overlays. */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.93);
+        z-index: 100;
+      }
+      .menu-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 26px 34px;
+        min-width: 320px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      }
+      .menu-card h1 {
+        margin: 0 0 16px;
+        color: #f8fafc;
+      }
+      .menu-section {
+        margin: 14px 0;
+      }
+      .menu-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        margin-bottom: 8px;
+      }
+      .menu-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .menu-row button {
+        width: auto;
+        text-align: center;
+      }
+      .menu-row button.active {
+        outline: 2px solid #38bdf8;
+        background: #2563eb;
+      }
+      .menu-play {
+        width: 100%;
+        margin-top: 18px;
+        font-size: 16px;
+      }
     </style>
   </head>
   <body>
@@ -459,6 +512,35 @@
       </div>
 
       <div id="hint"></div>
+    </div>
+
+    <!-- Start menu: difficulty + map selection, shown before the game starts. -->
+    <div id="startMenu" class="overlay">
+      <div class="menu-card">
+        <h1>Nallon Defense</h1>
+        <div class="menu-section">
+          <div class="menu-label">Difficulty</div>
+          <div class="menu-row" id="difficultyRow">
+            <button data-diff="easy" class="active">Easy</button>
+            <button data-diff="medium">Medium</button>
+            <button data-diff="hard">Hard</button>
+          </div>
+        </div>
+        <div class="menu-section">
+          <div class="menu-label">Map</div>
+          <div class="menu-row" id="mapRow"></div>
+        </div>
+        <button id="playBtn" class="go-btn menu-play">Play ▶</button>
+      </div>
+    </div>
+
+    <!-- Game-over / victory overlay. -->
+    <div id="gameOver" class="overlay" style="display:none">
+      <div class="menu-card">
+        <h1 id="goTitle">Game Over</h1>
+        <div id="goMsg" class="muted"></div>
+        <button id="goBtn" class="go-btn menu-play">Back to menu</button>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
