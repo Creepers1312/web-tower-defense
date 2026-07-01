@@ -1,0 +1,9 @@
+{
+  "id": "enemy_runner",
+  "name": "Runner",
+  "hp": 10,
+  "speed": 80,
+  "reward": 5,
+  "leakDamage": 1,
+  "flags": []
+}

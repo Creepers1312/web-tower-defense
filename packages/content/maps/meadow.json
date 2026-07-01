@@ -1,0 +1,22 @@
+{
+  "id": "map_meadow",
+  "name": "Green Meadow",
+  "path": [
+    { "x": 0, "y": 300 },
+    { "x": 200, "y": 300 },
+    { "x": 200, "y": 120 },
+    { "x": 500, "y": 120 },
+    { "x": 500, "y": 460 },
+    { "x": 780, "y": 460 }
+  ],
+  "buildableZones": [
+    { "x": 0, "y": 0, "width": 800, "height": 600 }
+  ],
+  "waves": [
+    {
+      "entries": [
+        { "enemyId": "enemy_runner", "count": 5, "spacing": 1, "delay": 0 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+/**
+ * Public API of the core simulation package.
+ *
+ * Everything the client (or a future server) needs is re-exported here so
+ * consumers import from `@td/core` rather than reaching into internal files.
+ */
+
+// Data contracts
+export type {
+  Vec2,
+  Rect,
+  TargetingMode,
+  StatModifiers,
+  UpgradeTier,
+  UpgradePath,
+  TowerDef,
+  EnemyDef,
+  WaveEntry,
+  Wave,
+  MapDef,
+  TowerInstance,
+  EnemyInstance,
+  ProjectileInstance,
+  GamePhase,
+  GameState,
+} from './types.js';
+
+// Registry & addons
+export { Registry } from './registry.js';
+export type { Addon } from './registry.js';
+
+// Effects (extension seam)
+export type { Effect, EffectContext } from './effects.js';
+export { directDamage, pierce, multishot } from './effects.js';
+export { registerBuiltinEffects } from './builtins.js';
+
+// Events
+export { EventBus } from './events.js';
+export type { EventMap, EventName, Listener } from './events.js';
+
+// Commands
+export { applyCommand, SELL_REFUND_RATE } from './commands.js';
+export type {
+  Command,
+  PlaceTowerCommand,
+  UpgradeCommand,
+  SellTowerCommand,
+  SetTargetingCommand,
+  StartWaveCommand,
+} from './commands.js';
+
+// Upgrade rules
+export { canUpgrade, nextTierCost, effectiveStats } from './upgrade.js';
+
+// Entities
+export { createEnemyInstance, createTowerInstance } from './entities.js';
+
+// Path helpers
+export { progressAlongPath, pathLength } from './path.js';
+export type { PathProgress } from './path.js';
+
+// Systems
+export { movementSystem } from './systems/movement.js';
+export type { MovementContext } from './systems/movement.js';
+
+// World
+export { World, createInitialState } from './world.js';
+export type { WorldOptions } from './world.js';

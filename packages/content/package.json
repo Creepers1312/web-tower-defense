@@ -1,0 +1,21 @@
+{
+  "name": "@td/content",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Data-driven game content (towers, enemies, maps) registered via an addon.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@td/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
