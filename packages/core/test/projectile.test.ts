@@ -3,6 +3,10 @@ import {
   Registry,
   World,
   registerBuiltinEffects,
+  predictAim,
+  progressAlongPath,
+  createEnemyInstance,
+  PROJECTILE_SPEED,
   type EnemyDef,
   type MapDef,
   type TowerDef,
@@ -42,6 +46,8 @@ const gun: TowerDef = {
 };
 
 const sitter: EnemyDef = { id: 'sitter', name: 'Sitter', hp: 1, speed: 0, reward: 1, leakDamage: 1, flags: [] };
+/** A fast crosser: without leading, straight darts trail it and miss. */
+const sprinter: EnemyDef = { id: 'sprinter', name: 'Sprinter', hp: 1, speed: 300, reward: 1, leakDamage: 1, flags: [] };
 
 const map: MapDef = {
   id: 'm',
@@ -58,6 +64,7 @@ function makeWorld(): World {
   const reg = new Registry();
   registerBuiltinEffects(reg);
   reg.registerEnemy(sitter);
+  reg.registerEnemy(sprinter);
   reg.registerTower(gun);
   reg.registerMap(map);
   return new World(reg, 'm', { startMoney: 10000, startLives: 100 });
@@ -135,5 +142,59 @@ describe('straight-line projectiles', () => {
     // One volley (fireRate 1) with pierce popped all three in a line.
     expect(kills).toHaveLength(3);
     expect(world.getState().enemies).toHaveLength(0);
+  });
+});
+
+// --- lead / intercept targeting --------------------------------------------
+
+describe('predictAim (lead targeting)', () => {
+  const line = map.path;
+
+  it('returns the current position for a stationary enemy (no lead)', () => {
+    const e = createEnemyInstance(sitter, 'e', { x: 100, y: 100 });
+    e.distance = 100; // pos already (100,100) on the line
+    const aim = predictAim({ x: 100, y: 40 }, e, line, PROJECTILE_SPEED);
+    expect(aim.x).toBeCloseTo(100, 5);
+    expect(aim.y).toBeCloseTo(100, 5);
+  });
+
+  it('aims ahead of a moving enemy, at a self-consistent intercept point', () => {
+    const e = createEnemyInstance(sprinter, 'e', { x: 100, y: 100 });
+    e.distance = 100;
+    e.pos = progressAlongPath(line, e.distance).pos;
+    const tower = { x: 100, y: 40 };
+    const aim = predictAim(tower, e, line, PROJECTILE_SPEED);
+
+    // Leads down-path (ahead of the enemy along +x here).
+    expect(aim.x).toBeGreaterThan(e.pos.x);
+    expect(aim.y).toBeCloseTo(100, 5);
+
+    // Self-consistency: the enemy actually reaches `aim` exactly when a dart
+    // fired now would (flight time = distance / speed).
+    const flight = Math.hypot(aim.x - tower.x, aim.y - tower.y) / PROJECTILE_SPEED;
+    const enemyAt = progressAlongPath(line, e.distance + e.speed * flight).pos;
+    expect(enemyAt.x).toBeCloseTo(aim.x, 1);
+    expect(enemyAt.y).toBeCloseTo(aim.y, 1);
+  });
+});
+
+describe('leading makes towers hit fast movers', () => {
+  it('kills a fast enemy crossing past an off-path tower (would miss un-led)', () => {
+    const world = makeWorld();
+    // Tower set back 60u from the path — the geometry that made un-led darts miss.
+    world.submit({ kind: 'PlaceTower', type: 'gun', pos: { x: 200, y: 40 } });
+    world.step();
+
+    const kills: string[] = [];
+    world.getEvents().on('onEnemyKilled', (p) => kills.push(p.enemyId));
+    const leaks: string[] = [];
+    world.getEvents().on('onEnemyLeaked', (p) => leaks.push(p.enemyId));
+
+    world.spawnEnemy('sprinter'); // enters at path start, sprints across
+    for (let i = 0; i < 120; i++) world.step();
+
+    expect(kills).toHaveLength(1);
+    expect(leaks).toHaveLength(0);
+    expect(world.getState().lives).toBe(100);
   });
 });
