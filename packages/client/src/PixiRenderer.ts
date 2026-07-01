@@ -138,6 +138,10 @@ export class PixiRenderer {
   private readonly range = new Graphics();
   private readonly ghost = new Graphics();
 
+  /** The container the canvas lives in, plus a watcher to re-fit on resize. */
+  private parent?: HTMLElement;
+  private resizeObserver?: ResizeObserver;
+
   constructor(
     private readonly world: World,
     private readonly registry: Registry,
@@ -159,6 +163,9 @@ export class PixiRenderer {
       height: VIEW_HEIGHT,
       background: COLORS.background,
       antialias: false,
+      // Render at the device pixel ratio so upscaling the board stays crisp.
+      resolution: Math.min(2, window.devicePixelRatio || 1),
+      autoDensity: true,
     });
     parent.appendChild(this.app.canvas);
 
@@ -175,6 +182,28 @@ export class PixiRenderer {
       this.popLayer,
       this.ghostLayer,
     );
+
+    // Scale the board to fill its container while keeping the 4:3 world coords
+    // (0..VIEW_WIDTH, 0..VIEW_HEIGHT). Re-fit whenever the container resizes.
+    this.parent = parent;
+    this.fit();
+    this.resizeObserver = new ResizeObserver(() => this.fit());
+    this.resizeObserver.observe(parent);
+  }
+
+  /** Size the renderer to the container and scale the stage so the fixed world
+   *  space fills it (letterboxed to preserve aspect). Input mapping is unchanged
+   *  because world coords still span 0..VIEW_WIDTH / 0..VIEW_HEIGHT. */
+  private fit(): void {
+    if (!this.parent) return;
+    const cellW = this.parent.clientWidth;
+    const cellH = this.parent.clientHeight;
+    if (cellW < 1 || cellH < 1) return;
+    const scale = Math.min(cellW / VIEW_WIDTH, cellH / VIEW_HEIGHT);
+    const w = Math.max(1, Math.round(VIEW_WIDTH * scale));
+    const h = Math.max(1, Math.round(VIEW_HEIGHT * scale));
+    this.app.renderer.resize(w, h);
+    this.app.stage.scale.set(w / VIEW_WIDTH, h / VIEW_HEIGHT);
   }
 
   /** Build the textured map: tiled grass background + a textured path following
