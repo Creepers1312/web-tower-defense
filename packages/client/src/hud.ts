@@ -13,6 +13,7 @@ import {
   effectiveStats,
   towerCapabilities,
   towerAbility,
+  SELL_REFUND_RATE,
   type Registry,
   type TargetingMode,
   type TowerInstance,
@@ -42,15 +43,20 @@ export class Hud {
   private readonly phase = el<HTMLElement>('phase');
   private readonly startWave = el<HTMLButtonElement>('startWave');
   private readonly palette = el<HTMLElement>('palette');
-  private readonly selectedPanel = el<HTMLElement>('selectedPanel');
-  private readonly selectedInfo = el<HTMLElement>('selectedInfo');
-  private readonly targeting = el<HTMLSelectElement>('targeting');
+  private readonly footer = el<HTMLElement>('footer');
+  private readonly selIcon = el<HTMLImageElement>('selIcon');
+  private readonly selName = el<HTMLElement>('selName');
+  private readonly selStats = el<HTMLElement>('selStats');
+  private readonly targeting = el<HTMLElement>('targeting');
   private readonly up0 = el<HTMLButtonElement>('up0');
   private readonly up1 = el<HTMLButtonElement>('up1');
   private readonly ability = el<HTMLButtonElement>('ability');
   private readonly sell = el<HTMLButtonElement>('sell');
   private readonly hint = el<HTMLElement>('hint');
   private readonly paletteButtons = new Map<string, HTMLButtonElement>();
+  private readonly targetingButtons = Array.from(
+    this.targeting.querySelectorAll<HTMLButtonElement>('button[data-mode]'),
+  );
 
   /** Transient "round cleared" banner (shown in the hint line for a few sec). */
   private banner = '';
@@ -103,15 +109,17 @@ export class Hud {
         this.selectedTowerId = null;
       }
     });
-    this.targeting.addEventListener('change', () => {
-      if (this.selectedTowerId) {
-        this.world.submit({
-          kind: 'SetTargeting',
-          towerId: this.selectedTowerId,
-          mode: this.targeting.value as TargetingMode,
-        });
-      }
-    });
+    for (const btn of this.targetingButtons) {
+      btn.addEventListener('click', () => {
+        if (this.selectedTowerId) {
+          this.world.submit({
+            kind: 'SetTargeting',
+            towerId: this.selectedTowerId,
+            mode: btn.dataset.mode as TargetingMode,
+          });
+        }
+      });
+    }
     this.up0.addEventListener('click', () => this.upgrade(0));
     this.up1.addEventListener('click', () => this.upgrade(1));
     this.ability.addEventListener('click', () => {
@@ -172,7 +180,6 @@ export class Hud {
       }
     }
     this.selectedTowerId = picked ? picked.id : null;
-    if (picked) this.targeting.value = picked.targeting;
   }
 
   private upgrade(path: 0 | 1): void {
@@ -200,7 +207,7 @@ export class Hud {
     } else {
       this.hint.textContent = this.placingType
         ? 'Click inside a buildable area (clear of the path) to place. Click the tower again to cancel.'
-        : 'Click a tower to select it. Pick a tower on the right to start placing.';
+        : 'Click a tower to select it (controls appear below). Pick a tower on the right to start placing.';
     }
 
     this.refreshSelected();
@@ -210,27 +217,35 @@ export class Hud {
     const tower = this.selectedTowerId
       ? this.world.getState().towers.find((t) => t.id === this.selectedTowerId)
       : undefined;
-    if (!tower) {
-      this.selectedPanel.style.display = 'none';
+    const def = tower ? this.registry.getTower(tower.type) : undefined;
+    if (!tower || !def) {
+      this.footer.style.display = 'none';
       return;
     }
-    const def = this.registry.getTower(tower.type);
-    if (!def) {
-      this.selectedPanel.style.display = 'none';
-      return;
-    }
-    this.selectedPanel.style.display = 'block';
+    this.footer.style.display = 'flex';
 
+    // Portrait + name + one-line stats.
+    const sprite = this.currentSprite(def, tower);
+    if (sprite) {
+      this.selIcon.src = `/sprites/${sprite}.png`;
+      this.selIcon.style.visibility = 'visible';
+    } else {
+      this.selIcon.style.visibility = 'hidden';
+    }
     const s = effectiveStats(def, tower);
     const caps = towerCapabilities(def, tower);
-    const camo = caps.camoDetection ? '✓' : '✗';
-    const lead = caps.popsLead ? '✓' : '✗';
-    this.selectedInfo.innerHTML =
-      `<b>${def.name}</b> · tiers ${tower.tiers[0]}/${tower.tiers[1]}<br>` +
-      `range ${Math.round(s.range)} · rate ${s.fireRate.toFixed(1)}/s · dmg ${s.damage}<br>` +
-      `<span class="muted">camo ${camo} · lead ${lead}</span>`;
+    const badges: string[] = [];
+    if (caps.camoDetection) badges.push('camo');
+    if (caps.popsLead) badges.push('lead');
+    this.selName.textContent = `${def.name}  (${tower.tiers[0]}/${tower.tiers[1]})`;
+    this.selStats.textContent =
+      `rng ${Math.round(s.range)} · ${s.fireRate.toFixed(1)}/s · dmg ${Math.round(s.damage)}` +
+      (badges.length ? ` · ${badges.join(' ')}` : '');
 
-    if (this.targeting.value !== tower.targeting) this.targeting.value = tower.targeting;
+    // Segmented targeting: highlight the active mode.
+    for (const btn of this.targetingButtons) {
+      btn.classList.toggle('active', btn.dataset.mode === tower.targeting);
+    }
 
     this.applyUpgradeButton(this.up0, def, tower, 0);
     this.applyUpgradeButton(this.up1, def, tower, 1);
@@ -239,18 +254,52 @@ export class Hud {
     if (!ability) {
       this.ability.style.display = 'none';
     } else {
-      this.ability.style.display = 'block';
+      this.ability.style.display = 'inline-block';
       if (tower.abilityActive > 0) {
-        this.ability.textContent = `⚡ ${ability.name} — active ${Math.ceil(tower.abilityActive)}s`;
+        this.ability.textContent = `⚡ ${ability.name}: active ${Math.ceil(tower.abilityActive)}s`;
         this.ability.disabled = true;
       } else if (tower.abilityCooldown > 0) {
-        this.ability.textContent = `⚡ ${ability.name} — ${Math.ceil(tower.abilityCooldown)}s`;
+        this.ability.textContent = `⚡ ${ability.name}: ${Math.ceil(tower.abilityCooldown)}s`;
         this.ability.disabled = true;
       } else {
-        this.ability.textContent = `⚡ ${ability.name} — ready`;
+        this.ability.textContent = `⚡ ${ability.name}: ready`;
         this.ability.disabled = false;
       }
     }
+
+    this.sell.textContent = `Sell $${this.sellValue(def, tower)}`;
+  }
+
+  /** Highest reached upgrade tier sprite (deep path drives the look), else base. */
+  private currentSprite(
+    def: NonNullable<ReturnType<Registry['getTower']>>,
+    tower: TowerInstance,
+  ): string | undefined {
+    let bestIdx = -1;
+    let best = def.sprite;
+    for (let p = 0 as 0 | 1; p <= 1; p = (p + 1) as 0 | 1) {
+      const level = tower.tiers[p];
+      for (let t = 0; t < level; t++) {
+        const sprite = def.paths[p].tiers[t].sprite;
+        if (sprite && t > bestIdx) {
+          bestIdx = t;
+          best = sprite;
+        }
+      }
+    }
+    return best;
+  }
+
+  /** Refund value shown on the Sell button (mirrors the core reducer). */
+  private sellValue(
+    def: NonNullable<ReturnType<Registry['getTower']>>,
+    tower: TowerInstance,
+  ): number {
+    let invested = def.cost;
+    for (let p = 0 as 0 | 1; p <= 1; p = (p + 1) as 0 | 1) {
+      for (let t = 0; t < tower.tiers[p]; t++) invested += def.paths[p].tiers[t].cost;
+    }
+    return Math.floor(invested * SELL_REFUND_RATE);
   }
 
   private applyUpgradeButton(
@@ -261,14 +310,25 @@ export class Hud {
   ): void {
     const level = tower.tiers[path];
     if (level >= 4) {
-      btn.textContent = `Path ${path + 1}: maxed`;
+      btn.innerHTML =
+        `<span class="fup-name">Path ${path + 1}</span>` +
+        `<span class="fup-sub">Fully upgraded</span>`;
       btn.disabled = true;
       return;
     }
     const tier = def.paths[path].tiers[level];
     const can = canUpgrade(tower, path);
     const affordable = this.world.getState().money >= tier.cost;
-    btn.textContent = `▲ ${tier.name} — $${tier.cost}`;
+    if (!can) {
+      // Path is locked because the other path already went deep (past tier 2).
+      btn.innerHTML =
+        `<span class="fup-name">${tier.name}</span>` +
+        `<span class="fup-sub">Path locked</span>`;
+    } else {
+      btn.innerHTML =
+        `<span class="fup-name">▲ ${tier.name}</span>` +
+        `<span class="fup-sub">$${tier.cost}</span>`;
+    }
     btn.disabled = !can || !affordable;
   }
 }
