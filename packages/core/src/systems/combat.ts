@@ -10,6 +10,7 @@
 import type { SystemContext } from './context.js';
 import type { EnemyInstance, TargetingMode, Vec2 } from '../types.js';
 import { effectiveStats, activeEffects, towerCapabilities, abilityBuff } from '../upgrade.js';
+import { progressAlongPath } from '../path.js';
 
 /** Speed of fired projectiles, in world units per second. */
 export const PROJECTILE_SPEED = 560;
@@ -17,8 +18,8 @@ export const PROJECTILE_SPEED = 560;
 /** Angular gap (radians) between darts of a multi-shot fan (~8°). */
 export const SHOT_SPREAD = 0.14;
 
-/** Extra distance beyond a tower's range a dart keeps flying before expiring. */
-export const PROJECTILE_RANGE_MARGIN = 40;
+/** Extra distance beyond the aim point a dart keeps flying before expiring. */
+export const PROJECTILE_RANGE_MARGIN = 60;
 
 /**
  * Choose which enemy a tower at `pos` with the given `range` and `mode` targets.
@@ -67,8 +68,30 @@ export function selectTarget(
   return best;
 }
 
+/**
+ * Predict where to aim so a straight, finite-speed dart intercepts a moving
+ * enemy. Enemies advance purely by `distance += speed*dt` along the map path, so
+ * the future position is the exact path point at the projected distance; we
+ * fixed-point iterate the flight time a few times to converge on the intercept.
+ * A stationary enemy (speed 0) resolves to its current position (no lead).
+ */
+export function predictAim(
+  towerPos: Vec2,
+  enemy: EnemyInstance,
+  path: Vec2[],
+  projectileSpeed: number,
+): Vec2 {
+  if (projectileSpeed <= 0) return enemy.pos;
+  let t = Math.hypot(enemy.pos.x - towerPos.x, enemy.pos.y - towerPos.y) / projectileSpeed;
+  for (let i = 0; i < 4; i++) {
+    const future = progressAlongPath(path, enemy.distance + enemy.speed * t).pos;
+    t = Math.hypot(future.x - towerPos.x, future.y - towerPos.y) / projectileSpeed;
+  }
+  return progressAlongPath(path, enemy.distance + enemy.speed * t).pos;
+}
+
 export function combatSystem(ctx: SystemContext): void {
-  const { state, registry, dt } = ctx;
+  const { state, registry, map, dt } = ctx;
 
   for (const tower of state.towers) {
     if (tower.cooldown > 0) tower.cooldown -= dt;
@@ -92,10 +115,15 @@ export function combatSystem(ctx: SystemContext): void {
       continue;
     }
 
-    const baseAngle = Math.atan2(target.pos.y - tower.pos.y, target.pos.x - tower.pos.x);
+    // Lead the target: aim where it will be when the dart arrives, not where it
+    // is now (straight darts otherwise trail fast movers and miss).
+    const aim = predictAim(tower.pos, target, map.path, PROJECTILE_SPEED);
+    const baseAngle = Math.atan2(aim.y - tower.pos.y, aim.x - tower.pos.x);
     const shots = Math.max(1, Math.round(stats.shots));
     const pops = Math.max(1, Math.round(stats.pierce) + 1);
-    const maxDist = stats.range + PROJECTILE_RANGE_MARGIN;
+    const aimDist = Math.hypot(aim.x - tower.pos.x, aim.y - tower.pos.y);
+    // Fly far enough to reach the (possibly led) aim point, plus a little beyond.
+    const maxDist = Math.max(stats.range, aimDist) + PROJECTILE_RANGE_MARGIN;
     const effects = activeEffects(def, tower);
 
     // Fire a symmetric fan of straight darts centred on the aim direction.
