@@ -1,19 +1,23 @@
 /**
- * projectileSystem — moves projectiles toward their target and resolves impacts.
+ * projectileSystem — flies projectiles in a straight line and resolves hits.
  *
- * On impact, the firing tower's active effects run (this is where damage is
- * dealt, via the `directDamage` effect — abilities via composition). If the
- * firing tower no longer exists (e.g. it was sold mid-flight), the projectile's
- * snapshotted damage is applied directly instead. Enemies reduced to zero hp are
- * killed, granting their reward.
+ * Projectiles do NOT home in on a target: each carries a fixed velocity set at
+ * fire time and travels along that heading until it has popped `pops` enemies or
+ * flown `maxDist`. As it passes through an enemy (within HIT_RADIUS of its travel
+ * segment this tick) the firing tower's effects run — this is where damage is
+ * dealt, via the `directDamage` effect. If the firing tower no longer exists
+ * (e.g. it was sold mid-flight), the projectile's snapshot damage is applied
+ * directly instead. Each enemy is hit at most once per projectile (`hitIds`).
+ * Enemies reduced to zero hp are killed, granting their reward.
  */
 
 import type { SystemContext } from './context.js';
 import type { EnemyInstance, ProjectileInstance, TowerInstance } from '../types.js';
 import { createEnemyInstance } from '../entities.js';
+import { distanceToSegment } from '../placement.js';
 
-/** Distance at which a projectile is considered to have hit its target. */
-export const HIT_RADIUS = 10;
+/** Distance from a projectile's flight path within which an enemy is hit. */
+export const HIT_RADIUS = 14;
 
 /**
  * Spawn a popped enemy's children at its position. Camo/regrow are inherited so
@@ -45,20 +49,21 @@ function popInto(ctx: SystemContext, parent: EnemyInstance): void {
   }
 }
 
-/** Radius around the impact within which pierce shots also hit other enemies. */
-export const PIERCE_RADIUS = 40;
-
-/** Damage a single enemy with a projectile (respecting lead), handling kills. */
+/**
+ * Damage a single enemy with a projectile (respecting lead), handling kills.
+ * Returns true if the enemy was actually engaged (lead-immune passes fizzle so
+ * the projectile keeps its pierce and flies on through).
+ */
 function hitEnemy(
   ctx: SystemContext,
   proj: ProjectileInstance,
   tower: TowerInstance | undefined,
   enemy: EnemyInstance,
-): void {
+): boolean {
   const { world, state, registry, dt, events } = ctx;
 
-  // Lead enemies take damage only from lead-popping shots.
-  if (enemy.flags.includes('lead') && !proj.popsLead) return;
+  // Lead enemies take damage only from lead-popping shots — otherwise fizzle.
+  if (enemy.flags.includes('lead') && !proj.popsLead) return false;
 
   if (tower) {
     for (const name of proj.effects) {
@@ -75,24 +80,7 @@ function hitEnemy(
     events.emit('onEnemyKilled', { enemyId: enemy.id, reward: enemy.reward });
     popInto(ctx, enemy);
   }
-}
-
-function resolveImpact(ctx: SystemContext, proj: ProjectileInstance, target: EnemyInstance): void {
-  const { state } = ctx;
-  const tower = state.towers.find((t) => t.id === proj.source);
-
-  hitEnemy(ctx, proj, tower, target);
-
-  // Pierce: also hit the nearest other enemies within the impact radius.
-  if (proj.pierce > 0) {
-    const others = state.enemies
-      .filter((e) => e.alive && e.id !== target.id)
-      .map((e) => ({ e, d: Math.hypot(e.pos.x - target.pos.x, e.pos.y - target.pos.y) }))
-      .filter((o) => o.d <= PIERCE_RADIUS)
-      .sort((a, b) => a.d - b.d)
-      .slice(0, proj.pierce);
-    for (const { e } of others) hitEnemy(ctx, proj, tower, e);
-  }
+  return true;
 }
 
 export function projectileSystem(ctx: SystemContext): void {
@@ -100,21 +88,29 @@ export function projectileSystem(ctx: SystemContext): void {
   const survivors: ProjectileInstance[] = [];
 
   for (const proj of state.projectiles) {
-    const target = state.enemies.find((e) => e.id === proj.target && e.alive);
-    if (!target) continue; // target already dead/gone → projectile disappears
+    const from = proj.pos;
+    const to = { x: proj.pos.x + proj.vel.x * dt, y: proj.pos.y + proj.vel.y * dt };
+    const step = Math.hypot(to.x - from.x, to.y - from.y);
+    const tower = state.towers.find((t) => t.id === proj.source);
 
-    const dx = target.pos.x - proj.pos.x;
-    const dy = target.pos.y - proj.pos.y;
-    const dist = Math.hypot(dx, dy);
-    const step = proj.speed * dt;
+    // Pop every not-yet-hit enemy the flight segment grazes this tick, nearest
+    // first, until the projectile runs out of pierce.
+    const candidates = state.enemies
+      .filter((e) => e.alive && !proj.hitIds.includes(e.id))
+      .map((e) => ({ e, d: distanceToSegment(e.pos, from, to) }))
+      .filter((o) => o.d <= HIT_RADIUS)
+      .sort((a, b) => a.d - b.d);
 
-    if (dist <= step || dist <= HIT_RADIUS) {
-      resolveImpact(ctx, proj, target);
-      continue; // projectile consumed on hit
+    for (const { e } of candidates) {
+      if (proj.pops <= 0) break;
+      if (!hitEnemy(ctx, proj, tower, e)) continue; // lead-immune → pass through
+      proj.hitIds.push(e.id);
+      proj.pops -= 1;
     }
 
-    proj.pos = { x: proj.pos.x + (dx / dist) * step, y: proj.pos.y + (dy / dist) * step };
-    survivors.push(proj);
+    proj.pos = to;
+    proj.traveled += step;
+    if (proj.pops > 0 && proj.traveled < proj.maxDist) survivors.push(proj);
   }
 
   state.projectiles = survivors;
