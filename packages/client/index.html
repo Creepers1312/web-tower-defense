@@ -121,13 +121,28 @@
         padding: 5px;
         width: 100%;
       }
+      .hud-icon {
+        width: 18px;
+        height: 18px;
+        image-rendering: pixelated;
+        vertical-align: middle;
+      }
+      #palette button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #palette .hud-icon {
+        width: 24px;
+        height: 24px;
+      }
     </style>
   </head>
   <body>
     <div id="game">
       <div id="topbar">
         <span class="stat">💰 <b id="money">0</b></span>
-        <span class="stat">❤️ <b id="lives">0</b></span>
+        <span class="stat"><img class="hud-icon" src="/sprites/heart.png" alt="lives" /> <b id="lives">0</b></span>
         <span class="stat">🌊 Wave <b id="wave">0</b></span>
         <span class="stat">Phase: <b id="phase">—</b></span>
         <span class="spacer"></span>

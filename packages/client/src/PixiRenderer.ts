@@ -3,10 +3,14 @@
  *
  * The whole rendering side of the strict simulation/rendering split: it never
  * mutates the world, only observes `world.getState()` and pushes the result into
- * PixiJS display objects. All graphics are simple placeholder shapes.
+ * PixiJS display objects.
+ *
+ * Entities render as pixel-art sprites when a `sprite` key is available in the
+ * content data (loaded from `public/sprites/`), and fall back to placeholder
+ * shapes otherwise. Sprites use nearest-neighbour scaling to stay crisp.
  */
 
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { effectiveStats, type Registry, type Vec2, type World } from '@td/core';
 
 export const VIEW_WIDTH = 800;
@@ -29,11 +33,10 @@ const COLORS = {
   placeBad: 0xef4444,
 } as const;
 
-const ENEMY_RADIUS = 12;
-const TOWER_RADIUS = 13;
+const ENEMY_RADIUS = 15; // half of the drawn enemy size
+const TOWER_RADIUS = 17;
 const PATH_WIDTH = 34;
 
-/** Parse a '#rrggbb' string to a numeric colour, falling back on error. */
 function parseColor(hex: string | undefined, fallback: number): number {
   if (!hex || hex[0] !== '#') return fallback;
   const n = Number.parseInt(hex.slice(1), 16);
@@ -46,6 +49,12 @@ export interface RenderView {
   placing: { pos: Vec2; range: number; valid: boolean } | null;
 }
 
+/** A rendered entity: a root container plus a redrawn-each-frame overlay. */
+interface EntityNode {
+  root: Container;
+  overlay: Graphics;
+}
+
 export class PixiRenderer {
   private readonly app = new Application();
 
@@ -56,9 +65,10 @@ export class PixiRenderer {
   private readonly projectileLayer = new Container();
   private readonly ghostLayer = new Container();
 
-  private readonly towerGfx = new Map<string, Graphics>();
-  private readonly enemyGfx = new Map<string, Graphics>();
+  private readonly towerNodes = new Map<string, EntityNode>();
+  private readonly enemyNodes = new Map<string, EntityNode>();
   private readonly projectileGfx = new Map<string, Graphics>();
+  private readonly textures = new Map<string, Texture>();
   private readonly range = new Graphics();
   private readonly ghost = new Graphics();
 
@@ -76,10 +86,11 @@ export class PixiRenderer {
       width: VIEW_WIDTH,
       height: VIEW_HEIGHT,
       background: COLORS.background,
-      antialias: true,
+      antialias: false,
     });
     parent.appendChild(this.app.canvas);
 
+    await this.loadSprites();
     this.drawPath();
     this.rangeLayer.addChild(this.range);
     this.ghostLayer.addChild(this.ghost);
@@ -92,7 +103,36 @@ export class PixiRenderer {
     );
   }
 
-  /** Convert a DOM mouse event position to world coordinates. */
+  /** Load every sprite referenced by content, keyed by its sprite name. */
+  private async loadSprites(): Promise<void> {
+    const keys = new Set<string>();
+    for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
+    for (const t of this.registry.allTowers()) if (t.sprite) keys.add(t.sprite);
+
+    await Promise.all(
+      [...keys].map(async (key) => {
+        try {
+          const tex = await Assets.load<Texture>(`/sprites/${key}.png`);
+          tex.source.scaleMode = 'nearest'; // crisp pixel art
+          this.textures.set(key, tex);
+        } catch {
+          /* missing sprite → placeholder shape is used instead */
+        }
+      }),
+    );
+  }
+
+  /** Build a sprite body sized to `targetHeight`, or null if no texture. */
+  private makeSprite(key: string | undefined, targetHeight: number): Sprite | null {
+    if (!key) return null;
+    const tex = this.textures.get(key);
+    if (!tex) return null;
+    const s = new Sprite(tex);
+    s.anchor.set(0.5);
+    s.scale.set(targetHeight / tex.height);
+    return s;
+  }
+
   screenToWorld(clientX: number, clientY: number): Vec2 {
     const rect = this.app.canvas.getBoundingClientRect();
     const scaleX = VIEW_WIDTH / rect.width;
@@ -112,13 +152,11 @@ export class PixiRenderer {
   }
 
   render(view: RenderView): void {
-    const state = this.world.getState();
     this.syncTowers(view.selectedTowerId);
     this.syncEnemies();
     this.syncProjectiles();
     this.drawRange(view);
     this.drawGhost(view);
-    void state;
   }
 
   private syncTowers(selectedId: string | null): void {
@@ -126,21 +164,26 @@ export class PixiRenderer {
     const seen = new Set<string>();
     for (const tower of towers) {
       seen.add(tower.id);
-      let g = this.towerGfx.get(tower.id);
-      if (!g) {
-        g = new Graphics();
-        this.towerLayer.addChild(g);
-        this.towerGfx.set(tower.id, g);
+      let node = this.towerNodes.get(tower.id);
+      if (!node) {
+        const root = new Container();
+        const def = this.registry.getTower(tower.type);
+        const body =
+          this.makeSprite(def?.sprite, TOWER_RADIUS * 2) ??
+          new Graphics().circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
+        const overlay = new Graphics();
+        root.addChild(body, overlay);
+        this.towerLayer.addChild(root);
+        node = { root, overlay };
+        this.towerNodes.set(tower.id, node);
       }
-      const selected = tower.id === selectedId;
-      g.clear();
-      g.circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
-      if (selected) g.circle(0, 0, TOWER_RADIUS + 3).stroke({ width: 2, color: COLORS.towerSelected });
-      // A little "barrel" tick so towers read as directional placeholders.
-      g.rect(-2, -TOWER_RADIUS - 4, 4, 6).fill(COLORS.tower);
-      g.position.set(tower.pos.x, tower.pos.y);
+      node.overlay.clear();
+      if (tower.id === selectedId) {
+        node.overlay.circle(0, 0, TOWER_RADIUS + 4).stroke({ width: 2, color: COLORS.towerSelected });
+      }
+      node.root.position.set(tower.pos.x, tower.pos.y);
     }
-    this.reap(this.towerGfx, seen, this.towerLayer);
+    this.reapNodes(this.towerNodes, seen, this.towerLayer);
   }
 
   private syncEnemies(): void {
@@ -148,32 +191,41 @@ export class PixiRenderer {
     const seen = new Set<string>();
     for (const enemy of enemies) {
       seen.add(enemy.id);
-      let g = this.enemyGfx.get(enemy.id);
-      if (!g) {
-        g = new Graphics();
-        this.enemyLayer.addChild(g);
-        this.enemyGfx.set(enemy.id, g);
+      let node = this.enemyNodes.get(enemy.id);
+      if (!node) {
+        const def = this.registry.getEnemy(enemy.type);
+        const isLead = enemy.flags.includes('lead');
+        const body =
+          this.makeSprite(def?.sprite, ENEMY_RADIUS * 2) ??
+          new Graphics()
+            .circle(0, 0, ENEMY_RADIUS)
+            .fill(isLead ? COLORS.lead : parseColor(def?.color, COLORS.enemy));
+        const overlay = new Graphics();
+        node = { root: new Container(), overlay };
+        node.root.addChild(body, overlay);
+        this.enemyLayer.addChild(node.root);
+        this.enemyNodes.set(enemy.id, node);
       }
-      const frac = enemy.maxHp > 0 ? Math.max(0, enemy.hp / enemy.maxHp) : 0;
-      const def = this.registry.getEnemy(enemy.type);
-      const isLead = enemy.flags.includes('lead');
-      const body = isLead ? COLORS.lead : parseColor(def?.color, COLORS.enemy);
-      g.clear();
-      g.circle(0, 0, ENEMY_RADIUS).fill(body);
-      // Flag indicators: camo (green ring), regrow (pink ring).
+
+      // Overlay (redrawn each frame): flag rings + HP bar.
+      const o = node.overlay;
+      o.clear();
       if (enemy.flags.includes('camo')) {
-        g.circle(0, 0, ENEMY_RADIUS + 2).stroke({ width: 2, color: COLORS.camoRing });
+        o.circle(0, 0, ENEMY_RADIUS + 2).stroke({ width: 2, color: COLORS.camoRing });
       }
       if (enemy.flags.includes('regrow')) {
-        g.circle(0, 0, ENEMY_RADIUS + 4).stroke({ width: 2, color: COLORS.regrowRing });
+        o.circle(0, 0, ENEMY_RADIUS + 4).stroke({ width: 2, color: COLORS.regrowRing });
       }
-      // HP bar above the enemy.
-      const w = 22;
-      g.rect(-w / 2, -ENEMY_RADIUS - 8, w, 4).fill(COLORS.enemyHpBg);
-      g.rect(-w / 2, -ENEMY_RADIUS - 8, w * frac, 4).fill(COLORS.enemyHp);
-      g.position.set(enemy.pos.x, enemy.pos.y);
+      const frac = enemy.maxHp > 0 ? Math.max(0, enemy.hp / enemy.maxHp) : 0;
+      if (frac < 1) {
+        const w = 24;
+        const y = -ENEMY_RADIUS - 8;
+        o.rect(-w / 2, y, w, 4).fill(COLORS.enemyHpBg);
+        o.rect(-w / 2, y, w * frac, 4).fill(COLORS.enemyHp);
+      }
+      node.root.position.set(enemy.pos.x, enemy.pos.y);
     }
-    this.reap(this.enemyGfx, seen, this.enemyLayer);
+    this.reapNodes(this.enemyNodes, seen, this.enemyLayer);
   }
 
   private syncProjectiles(): void {
@@ -189,7 +241,13 @@ export class PixiRenderer {
       }
       g.position.set(p.pos.x, p.pos.y);
     }
-    this.reap(this.projectileGfx, seen, this.projectileLayer);
+    for (const [id, g] of this.projectileGfx) {
+      if (!seen.has(id)) {
+        this.projectileLayer.removeChild(g);
+        g.destroy();
+        this.projectileGfx.delete(id);
+      }
+    }
   }
 
   private drawRange(view: RenderView): void {
@@ -221,11 +279,11 @@ export class PixiRenderer {
     this.ghost.circle(pos.x, pos.y, TOWER_RADIUS).fill({ color, alpha: 0.5 });
   }
 
-  private reap(map: Map<string, Graphics>, seen: Set<string>, layer: Container): void {
-    for (const [id, g] of map) {
+  private reapNodes(map: Map<string, EntityNode>, seen: Set<string>, layer: Container): void {
+    for (const [id, node] of map) {
       if (!seen.has(id)) {
-        layer.removeChild(g);
-        g.destroy();
+        layer.removeChild(node.root);
+        node.root.destroy({ children: true });
         map.delete(id);
       }
     }
