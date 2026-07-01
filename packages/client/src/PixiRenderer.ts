@@ -11,7 +11,14 @@
  */
 
 import { AnimatedSprite, Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
-import { effectiveStats, type Registry, type Vec2, type World } from '@td/core';
+import {
+  effectiveStats,
+  selectTarget,
+  towerCapabilities,
+  type Registry,
+  type Vec2,
+  type World,
+} from '@td/core';
 
 export const VIEW_WIDTH = 800;
 export const VIEW_HEIGHT = 600;
@@ -247,6 +254,27 @@ export class PixiRenderer {
         node.body.gotoAndPlay(0);
       }
       node.prevCooldown = tower.cooldown;
+
+      // Aim the sprite at the current target (sprites are drawn facing right).
+      // Flip vertically when aiming left so the monkey stays upright.
+      const def = this.registry.getTower(tower.type);
+      if (def && node.body) {
+        const stats = effectiveStats(def, tower);
+        const caps = towerCapabilities(def, tower);
+        const target = selectTarget(
+          tower.pos,
+          stats.range,
+          tower.targeting,
+          this.world.getState().enemies,
+          caps.camoDetection,
+        );
+        if (target) {
+          const ang = Math.atan2(target.pos.y - tower.pos.y, target.pos.x - tower.pos.x);
+          const s = Math.abs(node.body.scale.x);
+          node.body.rotation = ang;
+          node.body.scale.y = Math.cos(ang) < 0 ? -s : s;
+        }
+      }
 
       node.overlay.clear();
       if (tower.id === selectedId) {
