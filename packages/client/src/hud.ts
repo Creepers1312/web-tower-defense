@@ -25,6 +25,12 @@ import type { PixiRenderer, RenderView } from './PixiRenderer.js';
 /** Pixel radius used for click-selecting a placed tower. */
 const TOWER_PICK_RADIUS = 16;
 
+/** Delay before auto-wave starts the next round (lets the bonus banner show). */
+const AUTO_WAVE_DELAY_MS = 900;
+
+/** Selectable game speeds cycled by the speed button. */
+const SPEEDS = [1, 2, 3] as const;
+
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
   if (!node) throw new Error(`Missing #${id}`);
@@ -42,6 +48,9 @@ export class Hud {
   private readonly wave = el<HTMLElement>('wave');
   private readonly phase = el<HTMLElement>('phase');
   private readonly startWave = el<HTMLButtonElement>('startWave');
+  private readonly pauseBtn = el<HTMLButtonElement>('pauseBtn');
+  private readonly speedBtn = el<HTMLButtonElement>('speedBtn');
+  private readonly autoBtn = el<HTMLButtonElement>('autoBtn');
   private readonly palette = el<HTMLElement>('palette');
   private readonly footer = el<HTMLElement>('footer');
   private readonly selIcon = el<HTMLImageElement>('selIcon');
@@ -61,6 +70,13 @@ export class Hud {
   /** Transient "round cleared" banner (shown in the hint line for a few sec). */
   private banner = '';
   private bannerUntil = 0;
+
+  // --- game-loop controls (read by the loop in main.ts) ---
+  private paused = false;
+  private speedIndex = 0; // index into SPEEDS
+  private autoWave = false;
+  /** Timestamp at which auto-wave should fire the next round (0 = disarmed). */
+  private autoStartAt = 0;
 
   constructor(
     private readonly world: World,
@@ -86,6 +102,11 @@ export class Hud {
     return { selectedTowerId: this.selectedTowerId, placing };
   }
 
+  /** Loop control state read by the game loop each frame. */
+  loopState(): { paused: boolean; speed: number } {
+    return { paused: this.paused, speed: SPEEDS[this.speedIndex]! };
+  }
+
   // --- setup --------------------------------------------------------------
 
   private buildPalette(): void {
@@ -103,6 +124,16 @@ export class Hud {
 
   private wireControls(): void {
     this.startWave.addEventListener('click', () => this.world.submit({ kind: 'StartWave' }));
+    this.pauseBtn.addEventListener('click', () => {
+      this.paused = !this.paused;
+    });
+    this.speedBtn.addEventListener('click', () => {
+      this.speedIndex = (this.speedIndex + 1) % SPEEDS.length;
+    });
+    this.autoBtn.addEventListener('click', () => {
+      this.autoWave = !this.autoWave;
+      this.autoStartAt = 0; // re-arm from a clean state
+    });
     this.sell.addEventListener('click', () => {
       if (this.selectedTowerId) {
         this.world.submit({ kind: 'SellTower', towerId: this.selectedTowerId });
@@ -188,6 +219,22 @@ export class Hud {
     }
   }
 
+  /** Auto-start the next wave after a short delay while auto-wave is enabled. */
+  private updateAutoWave(phase: string): void {
+    const hasNextWave = this.world.getState().waveIndex < this.world.getMap().waves.length;
+    if (!this.autoWave || this.paused || phase !== 'building' || !hasNextWave) {
+      this.autoStartAt = 0; // disarm outside the building phase
+      return;
+    }
+    const now = performance.now();
+    if (this.autoStartAt === 0) {
+      this.autoStartAt = now + AUTO_WAVE_DELAY_MS; // arm the countdown
+    } else if (now >= this.autoStartAt) {
+      this.world.submit({ kind: 'StartWave' });
+      this.autoStartAt = 0; // re-arms next building phase; ignored once phase='wave'
+    }
+  }
+
   // --- per-frame DOM refresh ---------------------------------------------
 
   update(): void {
@@ -197,6 +244,15 @@ export class Hud {
     this.wave.textContent = String(state.waveIndex + 1);
     this.phase.textContent = state.phase;
     this.startWave.disabled = state.phase !== 'building';
+
+    // Loop-control buttons.
+    this.pauseBtn.textContent = this.paused ? '▶ Resume' : '⏸ Pause';
+    this.pauseBtn.classList.toggle('active', this.paused);
+    this.speedBtn.textContent = `${SPEEDS[this.speedIndex]}×`;
+    this.speedBtn.classList.toggle('active', SPEEDS[this.speedIndex]! > 1);
+    this.autoBtn.textContent = this.autoWave ? 'Auto: on' : 'Auto: off';
+    this.autoBtn.classList.toggle('active', this.autoWave);
+    this.updateAutoWave(state.phase);
 
     for (const [type, btn] of this.paletteButtons) {
       btn.classList.toggle('active', this.placingType === type);
