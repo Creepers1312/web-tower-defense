@@ -28,6 +28,7 @@ function tower(x: number, y: number): TowerInstance {
     cooldown: 0,
     abilityCooldown: 0,
     abilityActive: 0,
+    pops: 0,
   };
 }
 

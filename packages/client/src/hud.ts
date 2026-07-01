@@ -21,6 +21,7 @@ import {
   type World,
 } from '@td/core';
 import type { PixiRenderer, RenderView } from './PixiRenderer.js';
+import { AudioManager } from './audio.js';
 
 /** Pixel radius used for click-selecting a placed tower. */
 const TOWER_PICK_RADIUS = 16;
@@ -51,6 +52,8 @@ export class Hud {
   private readonly pauseBtn = el<HTMLButtonElement>('pauseBtn');
   private readonly speedBtn = el<HTMLButtonElement>('speedBtn');
   private readonly autoBtn = el<HTMLButtonElement>('autoBtn');
+  private readonly musicMute = el<HTMLButtonElement>('musicMute');
+  private readonly sfxMute = el<HTMLButtonElement>('sfxMute');
   private readonly palette = el<HTMLElement>('palette');
   private readonly footerDefault = el<HTMLElement>('footerDefault');
   private readonly footerSelected = el<HTMLElement>('footerSelected');
@@ -75,6 +78,9 @@ export class Hud {
   /** Cached upgrade-tile markup per path, so we only rebuild (and reset the
    *  hover tooltip) when the content actually changes. */
   private readonly upHtml: [string, string] = ['', ''];
+
+  /** Music + sound-effect channels (mute state persisted); ready for audio files. */
+  private readonly audio = new AudioManager();
 
   // --- game-loop controls (read by the loop in main.ts) ---
   private paused = false;
@@ -139,6 +145,8 @@ export class Hud {
       this.autoWave = !this.autoWave;
       this.autoStartAt = 0; // re-arm from a clean state
     });
+    this.musicMute.addEventListener('click', () => this.audio.toggleMusic());
+    this.sfxMute.addEventListener('click', () => this.audio.toggleSfx());
     this.sell.addEventListener('click', () => {
       if (this.selectedTowerId) {
         this.world.submit({ kind: 'SellTower', towerId: this.selectedTowerId });
@@ -259,6 +267,14 @@ export class Hud {
     this.autoBtn.classList.toggle('active', this.autoWave);
     this.updateAutoWave(state.phase);
 
+    // Audio mute toggles.
+    const musicMuted = this.audio.isMusicMuted();
+    const sfxMuted = this.audio.isSfxMuted();
+    this.musicMute.textContent = musicMuted ? '🔇' : '🎵';
+    this.musicMute.classList.toggle('muted', musicMuted);
+    this.sfxMute.textContent = sfxMuted ? '🔇' : '🔊';
+    this.sfxMute.classList.toggle('muted', sfxMuted);
+
     for (const [type, btn] of this.paletteButtons) {
       btn.classList.toggle('active', this.placingType === type);
     }
@@ -303,7 +319,7 @@ export class Hud {
     if (caps.popsLead) badges.push('lead');
     this.selName.textContent = `${def.name}  (${tower.tiers[0]}/${tower.tiers[1]})`;
     this.selStats.textContent =
-      `rng ${Math.round(s.range)} · ${s.fireRate.toFixed(1)}/s · dmg ${Math.round(s.damage)}` +
+      `Pops ${tower.pops} · rng ${Math.round(s.range)} · ${s.fireRate.toFixed(1)}/s · dmg ${Math.round(s.damage)}` +
       (badges.length ? ` · ${badges.join(' ')}` : '');
 
     // Segmented targeting: highlight the active mode.
