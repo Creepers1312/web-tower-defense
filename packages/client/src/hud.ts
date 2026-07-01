@@ -52,7 +52,8 @@ export class Hud {
   private readonly speedBtn = el<HTMLButtonElement>('speedBtn');
   private readonly autoBtn = el<HTMLButtonElement>('autoBtn');
   private readonly palette = el<HTMLElement>('palette');
-  private readonly footer = el<HTMLElement>('footer');
+  private readonly footerDefault = el<HTMLElement>('footerDefault');
+  private readonly footerSelected = el<HTMLElement>('footerSelected');
   private readonly selIcon = el<HTMLImageElement>('selIcon');
   private readonly selName = el<HTMLElement>('selName');
   private readonly selStats = el<HTMLElement>('selStats');
@@ -275,10 +276,13 @@ export class Hud {
       : undefined;
     const def = tower ? this.registry.getTower(tower.type) : undefined;
     if (!tower || !def) {
-      this.footer.style.display = 'none';
+      // No selection: show the default (agents) view; footer height is unchanged.
+      this.footerDefault.style.display = 'flex';
+      this.footerSelected.style.display = 'none';
       return;
     }
-    this.footer.style.display = 'flex';
+    this.footerDefault.style.display = 'none';
+    this.footerSelected.style.display = 'flex';
 
     // Portrait + name + one-line stats.
     const sprite = this.currentSprite(def, tower);
