@@ -30,6 +30,10 @@ import {
   type World,
 } from '@td/core';
 
+/** The dart art points its tip ~12.3° above the sprite's local +x axis (it's
+ *  drawn diagonally). Subtract this so the tip aligns with the flight heading. */
+const DART_SPRITE_FORWARD = -0.215;
+
 export const VIEW_WIDTH = 800;
 // The meadow path runs down to y≈660 (its exit), so the view must be at least
 // that tall or the bottom of the track gets clipped off-screen.
@@ -547,9 +551,9 @@ export class PixiRenderer {
         this.projectileNodes.set(p.id, node);
       }
       node.obj.position.set(p.pos.x, p.pos.y);
-      // Point the dart along its (fixed) direction of travel.
+      // Point the dart's tip along its (fixed) direction of travel.
       if (node.kind === 'dart') {
-        node.obj.rotation = Math.atan2(p.vel.y, p.vel.x);
+        node.obj.rotation = Math.atan2(p.vel.y, p.vel.x) - DART_SPRITE_FORWARD;
       }
     }
     for (const [id, node] of this.projectileNodes) {
