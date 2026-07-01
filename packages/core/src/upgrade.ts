@@ -53,10 +53,14 @@ export function effectiveStats(def: TowerDef, tower: TowerInstance): {
   range: number;
   fireRate: number;
   damage: number;
+  pierce: number;
+  shots: number;
 } {
   let range = def.range;
   let fireRate = def.fireRate;
   let damage = def.damage;
+  let pierce = 0; // extra enemies hit per shot (base hits one)
+  let shots = 1; // projectiles per shot
 
   for (let path = 0 as 0 | 1; path <= 1; path = (path + 1) as 0 | 1) {
     const level = tower.tiers[path];
@@ -65,10 +69,12 @@ export function effectiveStats(def: TowerDef, tower: TowerInstance): {
       range += mods.range ?? 0;
       fireRate += mods.fireRate ?? 0;
       damage += mods.damage ?? 0;
+      pierce += mods.pierce ?? 0;
+      shots += mods.shots ?? 0;
     }
   }
 
-  return { range, fireRate, damage };
+  return { range, fireRate, damage, pierce, shots };
 }
 
 /**

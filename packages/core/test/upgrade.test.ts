@@ -82,11 +82,54 @@ describe('effectiveStats', () => {
   };
 
   it('returns base stats at tier [0, 0]', () => {
-    expect(effectiveStats(def, tower(0, 0))).toEqual({ range: 100, fireRate: 1, damage: 1 });
+    expect(effectiveStats(def, tower(0, 0))).toEqual({
+      range: 100,
+      fireRate: 1,
+      damage: 1,
+      pierce: 0,
+      shots: 1,
+    });
   });
 
   it('folds in additive modifiers from both paths', () => {
     // path0 tier2 => +damage 1, +fireRate 1 ; path1 tier1 => +range 20
-    expect(effectiveStats(def, tower(2, 1))).toEqual({ range: 120, fireRate: 2, damage: 2 });
+    expect(effectiveStats(def, tower(2, 1))).toEqual({
+      range: 120,
+      fireRate: 2,
+      damage: 2,
+      pierce: 0,
+      shots: 1,
+    });
+  });
+
+  it('accumulates pierce and shots modifiers', () => {
+    const pdef: TowerDef = {
+      ...def,
+      paths: [
+        {
+          tiers: [
+            { name: 'p1', cost: 10, modifiers: { pierce: 1 } },
+            { name: 'p2', cost: 20, modifiers: { pierce: 2 } },
+            { name: 'p3', cost: 30, modifiers: {} },
+            { name: 'p4', cost: 40, modifiers: {} },
+          ],
+        },
+        {
+          tiers: [
+            { name: 's1', cost: 10, modifiers: { shots: 1 } },
+            { name: 's2', cost: 20, modifiers: { shots: 1 } },
+            { name: 's3', cost: 30, modifiers: {} },
+            { name: 's4', cost: 40, modifiers: {} },
+          ],
+        },
+      ],
+    };
+    expect(effectiveStats(pdef, tower(2, 2))).toEqual({
+      range: 100,
+      fireRate: 1,
+      damage: 1,
+      pierce: 3,
+      shots: 3,
+    });
   });
 });

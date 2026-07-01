@@ -43,6 +43,10 @@ export type StatModifiers = Partial<{
   range: number;
   fireRate: number;
   damage: number;
+  /** Extra enemies a single shot can also hit (0 = hits one). */
+  pierce: number;
+  /** Extra projectiles fired per shot (base is 1). */
+  shots: number;
 }>;
 
 /** Special capabilities a tower can have (base or unlocked by an upgrade tier). */
@@ -195,6 +199,8 @@ export interface ProjectileInstance {
   effects: string[];
   /** Whether this shot can damage lead enemies (snapshot at fire time). */
   popsLead: boolean;
+  /** Extra enemies this shot can also hit on impact (0 = single target). */
+  pierce: number;
 }
 
 export type GamePhase = 'building' | 'wave' | 'won' | 'lost';

@@ -82,7 +82,7 @@ export {
 export type { SystemContext } from './systems/context.js';
 export { spawnSystem } from './systems/spawn.js';
 export { movementSystem } from './systems/movement.js';
-export { combatSystem, selectTarget, PROJECTILE_SPEED } from './systems/combat.js';
+export { combatSystem, selectTarget, selectTargets, PROJECTILE_SPEED } from './systems/combat.js';
 export { projectileSystem, HIT_RADIUS } from './systems/projectile.js';
 export { regrowSystem, regrowEnemy } from './systems/regrow.js';
 export { waveSystem, roundBonus, ROUND_BONUS_BASE, ROUND_BONUS_STEP } from './systems/wave.js';
