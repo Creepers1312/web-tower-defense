@@ -169,5 +169,69 @@
     "color": "#f472b6",
     "sprite": "nallon_green",
     "children": [{ "enemyId": "nallon_green", "count": 1 }]
+  },
+  {
+    "id": "nallon_blimp",
+    "name": "Nallon Blimp",
+    "hp": 200,
+    "speed": 90,
+    "reward": 50,
+    "leakDamage": 12,
+    "flags": [],
+    "color": "#7c3aed",
+    "sprite": "nallon_purple",
+    "children": [{ "enemyId": "nallon_armored", "count": 4 }]
+  },
+  {
+    "id": "nallon_behemoth",
+    "name": "Nallon Behemoth",
+    "hp": 700,
+    "speed": 23,
+    "reward": 150,
+    "leakDamage": 24,
+    "flags": [],
+    "color": "#b91c1c",
+    "sprite": "nallon_red",
+    "children": [{ "enemyId": "nallon_blimp", "count": 4 }]
+  },
+  {
+    "id": "nallon_colossus",
+    "name": "Nallon Colossus",
+    "hp": 4000,
+    "speed": 16,
+    "reward": 600,
+    "leakDamage": 40,
+    "flags": [],
+    "color": "#0891b2",
+    "sprite": "nallon_blue",
+    "children": [{ "enemyId": "nallon_behemoth", "count": 4 }]
+  },
+  {
+    "id": "nallon_wraith",
+    "name": "Nallon Wraith",
+    "hp": 520,
+    "speed": 238,
+    "reward": 120,
+    "leakDamage": 20,
+    "flags": ["lead", "camo", "regrow"],
+    "regrowRate": 8,
+    "color": "#111827",
+    "sprite": "nallon_black",
+    "children": [{ "enemyId": "nallon_armored", "count": 4 }]
+  },
+  {
+    "id": "nallon_leviathan",
+    "name": "Nallon Leviathan",
+    "hp": 28000,
+    "speed": 16,
+    "reward": 2000,
+    "leakDamage": 60,
+    "flags": [],
+    "color": "#f59e0b",
+    "sprite": "nallon_brown",
+    "children": [
+      { "enemyId": "nallon_colossus", "count": 2 },
+      { "enemyId": "nallon_wraith", "count": 3 }
+    ]
   }
 ]

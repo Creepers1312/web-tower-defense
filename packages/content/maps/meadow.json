@@ -1842,45 +1842,45 @@
       "entries": [
         {
           "enemyId": "nallon_red",
-          "count": 2,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_blue",
           "count": 1,
           "spacing": 0.45,
-          "delay": 1.5
+          "delay": 0
         },
         {
           "enemyId": "nallon_green",
           "count": 1,
           "spacing": 0.5,
-          "delay": 3
+          "delay": 1.5
         },
         {
           "enemyId": "nallon_yellow",
-          "count": 1,
+          "count": 2,
           "spacing": 0.4,
-          "delay": 4.5
+          "delay": 3
         },
         {
           "enemyId": "nallon_pink",
-          "count": 3,
+          "count": 2,
           "spacing": 0.38,
-          "delay": 6
+          "delay": 4.5
         },
         {
           "enemyId": "nallon_white",
-          "count": 6,
+          "count": 4,
           "spacing": 0.7,
-          "delay": 7.5
+          "delay": 6
         },
         {
           "enemyId": "nallon_black",
           "count": 2,
           "spacing": 0.7,
-          "delay": 9
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_blimp",
+          "count": 1,
+          "spacing": 3,
+          "delay": 13
         }
       ]
     },
@@ -2093,6 +2093,12 @@
           "count": 3,
           "spacing": 0.9,
           "delay": 9
+        },
+        {
+          "enemyId": "nallon_wraith",
+          "count": 1,
+          "spacing": 3,
+          "delay": 14.5
         }
       ]
     },
@@ -2289,32 +2295,32 @@
     {
       "entries": [
         {
-          "enemyId": "nallon_blue",
+          "enemyId": "nallon_red",
           "count": 1,
           "spacing": 0.45,
           "delay": 0
         },
         {
-          "enemyId": "nallon_yellow",
+          "enemyId": "nallon_green",
           "count": 1,
-          "spacing": 0.4,
+          "spacing": 0.5,
           "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_pink",
+          "count": 1,
+          "spacing": 0.38,
+          "delay": 3
         },
         {
           "enemyId": "nallon_regrow",
           "count": 1,
           "spacing": 0.6,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 1,
-          "spacing": 0.7,
           "delay": 4.5
         },
         {
-          "enemyId": "nallon_black",
-          "count": 1,
+          "enemyId": "nallon_white",
+          "count": 2,
           "spacing": 0.7,
           "delay": 6
         },
@@ -2326,15 +2332,21 @@
         },
         {
           "enemyId": "nallon_zebra",
-          "count": 2,
+          "count": 1,
           "spacing": 0.7,
           "delay": 9
         },
         {
           "enemyId": "nallon_rainbow",
-          "count": 3,
+          "count": 2,
           "spacing": 0.6,
           "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_blimp",
+          "count": 2,
+          "spacing": 3,
+          "delay": 16
         }
       ]
     },
@@ -2577,6 +2589,12 @@
           "count": 1,
           "spacing": 0.9,
           "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_behemoth",
+          "count": 1,
+          "spacing": 4,
+          "delay": 16
         }
       ]
     },
@@ -2779,52 +2797,58 @@
           "delay": 0
         },
         {
-          "enemyId": "nallon_green",
+          "enemyId": "nallon_yellow",
           "count": 1,
-          "spacing": 0.5,
+          "spacing": 0.4,
           "delay": 1.5
         },
         {
-          "enemyId": "nallon_regrow",
-          "count": 1,
-          "spacing": 0.6,
-          "delay": 3
-        },
-        {
           "enemyId": "nallon_white",
-          "count": 2,
+          "count": 1,
           "spacing": 0.7,
-          "delay": 4.5
+          "delay": 3
         },
         {
           "enemyId": "nallon_black",
           "count": 1,
           "spacing": 0.7,
-          "delay": 6
+          "delay": 4.5
         },
         {
           "enemyId": "nallon_lead",
           "count": 2,
           "spacing": 0.9,
-          "delay": 7.5
+          "delay": 6
         },
         {
           "enemyId": "nallon_zebra",
           "count": 1,
           "spacing": 0.7,
-          "delay": 9
+          "delay": 7.5
         },
         {
           "enemyId": "nallon_rainbow",
           "count": 2,
           "spacing": 0.6,
-          "delay": 10.5
+          "delay": 9
         },
         {
           "enemyId": "nallon_armored",
-          "count": 3,
+          "count": 2,
           "spacing": 0.9,
-          "delay": 12
+          "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_behemoth",
+          "count": 1,
+          "spacing": 4,
+          "delay": 16
+        },
+        {
+          "enemyId": "nallon_blimp",
+          "count": 2,
+          "spacing": 3,
+          "delay": 23
         }
       ]
     },
@@ -3115,6 +3139,12 @@
           "count": 2,
           "spacing": 0.9,
           "delay": 12
+        },
+        {
+          "enemyId": "nallon_wraith",
+          "count": 2,
+          "spacing": 3,
+          "delay": 17.5
         }
       ]
     },
@@ -3317,6 +3347,418 @@
     {
       "entries": [
         {
+          "enemyId": "nallon_red",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_blue",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_pink",
+          "count": 1,
+          "spacing": 0.38,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 3,
+          "spacing": 0.6,
+          "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 12
+        },
+        {
+          "enemyId": "nallon_colossus",
+          "count": 1,
+          "spacing": 5,
+          "delay": 17.5
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "enemyId": "nallon_blue",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_pink",
+          "count": 1,
+          "spacing": 0.38,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 4,
+          "spacing": 0.6,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 10.5
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "enemyId": "nallon_blue",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_pink",
+          "count": 1,
+          "spacing": 0.38,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 4,
+          "spacing": 0.6,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 10.5
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "enemyId": "nallon_red",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_blue",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_pink",
+          "count": 1,
+          "spacing": 0.38,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 4,
+          "spacing": 0.6,
+          "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 12
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "enemyId": "nallon_red",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_blue",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_regrow",
+          "count": 1,
+          "spacing": 0.6,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 3,
+          "spacing": 0.6,
+          "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 12
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "enemyId": "nallon_red",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_green",
+          "count": 1,
+          "spacing": 0.5,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_regrow",
+          "count": 1,
+          "spacing": 0.6,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 3,
+          "spacing": 0.6,
+          "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 12
+        },
+        {
+          "enemyId": "nallon_behemoth",
+          "count": 2,
+          "spacing": 4,
+          "delay": 17.5
+        },
+        {
+          "enemyId": "nallon_wraith",
+          "count": 1,
+          "spacing": 3,
+          "delay": 28.5
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
+          "enemyId": "nallon_red",
+          "count": 1,
+          "spacing": 0.45,
+          "delay": 0
+        },
+        {
+          "enemyId": "nallon_green",
+          "count": 1,
+          "spacing": 0.5,
+          "delay": 1.5
+        },
+        {
+          "enemyId": "nallon_regrow",
+          "count": 1,
+          "spacing": 0.6,
+          "delay": 3
+        },
+        {
+          "enemyId": "nallon_white",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 4.5
+        },
+        {
+          "enemyId": "nallon_black",
+          "count": 1,
+          "spacing": 0.7,
+          "delay": 6
+        },
+        {
+          "enemyId": "nallon_lead",
+          "count": 3,
+          "spacing": 0.9,
+          "delay": 7.5
+        },
+        {
+          "enemyId": "nallon_zebra",
+          "count": 2,
+          "spacing": 0.7,
+          "delay": 9
+        },
+        {
+          "enemyId": "nallon_rainbow",
+          "count": 4,
+          "spacing": 0.6,
+          "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_armored",
+          "count": 4,
+          "spacing": 0.9,
+          "delay": 12
+        }
+      ]
+    },
+    {
+      "entries": [
+        {
           "enemyId": "nallon_blue",
           "count": 1,
           "spacing": 0.45,
@@ -3329,400 +3771,6 @@
           "delay": 1.5
         },
         {
-          "enemyId": "nallon_white",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_purple",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 4,
-          "spacing": 0.6,
-          "delay": 10.5
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 12
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_blue",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_pink",
-          "count": 1,
-          "spacing": 0.38,
-          "delay": 1.5
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 3,
-          "spacing": 0.9,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 4,
-          "spacing": 0.6,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 3,
-          "spacing": 0.9,
-          "delay": 10.5
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_blue",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_pink",
-          "count": 1,
-          "spacing": 0.38,
-          "delay": 1.5
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 4,
-          "spacing": 0.6,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 3,
-          "spacing": 0.9,
-          "delay": 10.5
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_red",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_blue",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 1.5
-        },
-        {
-          "enemyId": "nallon_pink",
-          "count": 1,
-          "spacing": 0.38,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 4,
-          "spacing": 0.6,
-          "delay": 10.5
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 3,
-          "spacing": 0.9,
-          "delay": 12
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_red",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_blue",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 1.5
-        },
-        {
-          "enemyId": "nallon_regrow",
-          "count": 1,
-          "spacing": 0.6,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 3,
-          "spacing": 0.9,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 3,
-          "spacing": 0.6,
-          "delay": 10.5
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 12
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_red",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_green",
-          "count": 1,
-          "spacing": 0.5,
-          "delay": 1.5
-        },
-        {
-          "enemyId": "nallon_regrow",
-          "count": 1,
-          "spacing": 0.6,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 3,
-          "spacing": 0.6,
-          "delay": 10.5
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 12
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_red",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_green",
-          "count": 1,
-          "spacing": 0.5,
-          "delay": 1.5
-        },
-        {
-          "enemyId": "nallon_regrow",
-          "count": 1,
-          "spacing": 0.6,
-          "delay": 3
-        },
-        {
-          "enemyId": "nallon_white",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 4.5
-        },
-        {
-          "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 6
-        },
-        {
-          "enemyId": "nallon_lead",
-          "count": 3,
-          "spacing": 0.9,
-          "delay": 7.5
-        },
-        {
-          "enemyId": "nallon_zebra",
-          "count": 2,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_rainbow",
-          "count": 4,
-          "spacing": 0.6,
-          "delay": 10.5
-        },
-        {
-          "enemyId": "nallon_armored",
-          "count": 4,
-          "spacing": 0.9,
-          "delay": 12
-        }
-      ]
-    },
-    {
-      "entries": [
-        {
-          "enemyId": "nallon_blue",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 0
-        },
-        {
-          "enemyId": "nallon_yellow",
-          "count": 1,
-          "spacing": 0.4,
-          "delay": 1.5
-        },
-        {
           "enemyId": "nallon_regrow",
           "count": 1,
           "spacing": 0.6,
@@ -3922,15 +3970,21 @@
         },
         {
           "enemyId": "nallon_rainbow",
-          "count": 6,
+          "count": 5,
           "spacing": 0.6,
           "delay": 9
         },
         {
           "enemyId": "nallon_armored",
-          "count": 6,
+          "count": 4,
           "spacing": 0.9,
           "delay": 10.5
+        },
+        {
+          "enemyId": "nallon_leviathan",
+          "count": 1,
+          "spacing": 6,
+          "delay": 16
         }
       ]
     }
