@@ -15,7 +15,17 @@
   "waves": [
     {
       "entries": [
-        { "enemyId": "enemy_runner", "count": 5, "spacing": 1, "delay": 0 }
+        { "enemyId": "nallon_green", "count": 6, "spacing": 0.8, "delay": 0 },
+        { "enemyId": "nallon_pink", "count": 2, "spacing": 1, "delay": 5 }
+      ]
+    },
+    {
+      "entries": [
+        { "enemyId": "nallon_camo", "count": 3, "spacing": 1, "delay": 0 },
+        { "enemyId": "nallon_lead", "count": 2, "spacing": 1, "delay": 3 },
+        { "enemyId": "nallon_regrow", "count": 2, "spacing": 1.5, "delay": 6 },
+        { "enemyId": "nallon_rainbow", "count": 1, "spacing": 1, "delay": 10 },
+        { "enemyId": "nallon_armored", "count": 1, "spacing": 1, "delay": 12 }
       ]
     }
   ]

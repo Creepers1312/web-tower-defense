@@ -11,6 +11,7 @@ import {
   canPlaceTower,
   canUpgrade,
   effectiveStats,
+  towerCapabilities,
   type Registry,
   type TargetingMode,
   type TowerInstance,
@@ -199,9 +200,13 @@ export class Hud {
     this.selectedPanel.style.display = 'block';
 
     const s = effectiveStats(def, tower);
+    const caps = towerCapabilities(def, tower);
+    const camo = caps.camoDetection ? '✓' : '✗';
+    const lead = caps.popsLead ? '✓' : '✗';
     this.selectedInfo.innerHTML =
       `<b>${def.name}</b> · tiers ${tower.tiers[0]}/${tower.tiers[1]}<br>` +
-      `range ${Math.round(s.range)} · rate ${s.fireRate.toFixed(1)}/s · dmg ${s.damage}`;
+      `range ${Math.round(s.range)} · rate ${s.fireRate.toFixed(1)}/s · dmg ${s.damage}<br>` +
+      `<span class="muted">camo ${camo} · lead ${lead}</span>`;
 
     if (this.targeting.value !== tower.targeting) this.targeting.value = tower.targeting;
 

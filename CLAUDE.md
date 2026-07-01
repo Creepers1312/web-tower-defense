@@ -61,11 +61,13 @@ These fields must exist (extensions are fine, but do not remove/rename these):
 - **TowerDef**: `id, name, cost, range, fireRate` (shots/sec), `damage`,
   `targeting: 'first'|'last'|'close'|'strong'`, `effects: string[]`,
   `paths: [UpgradePath, UpgradePath]` (exactly two).
+  Optional capabilities: `camoDetection?`, `popsLead?`.
 - **UpgradePath**: `tiers: [UpgradeTier x4]` (exactly four).
 - **UpgradeTier**: `name, cost, modifiers: Partial<{range, fireRate, damage}>`,
-  `addEffects?: string[]`.
+  `addEffects?: string[]`, `grants?: {camoDetection?, popsLead?}`.
 - **EnemyDef**: `id, name, hp, speed` (units/sec), `reward`, `leakDamage`,
-  `flags: string[]` (e.g. `'camo'`).
+  `flags: string[]` (e.g. `'camo'`, `'lead'`, `'regrow'`). Optional:
+  `children?: {enemyId, count}[]` (spawned when popped), `regrowRate?`, `color?`.
 - **MapDef**: `id, name, path: {x,y}[]`, `buildableZones: Rect[]`, `waves: Wave[]`.
 - **Wave**: `entries: { enemyId, count, spacing, delay }[]` (seconds).
 
@@ -116,7 +118,23 @@ movement along the path.
   fires a projectile carrying effective damage + a snapshot of active effects.
 - **projectileSystem** flies projectiles to their target and, on impact, runs the
   tower's effects (damage is dealt by the `directDamage` effect); kills grant money.
+  A popped enemy spawns its `children` at its position (the Nallon hierarchy).
+- **regrowSystem** heals damaged `regrow` enemies back toward `maxHp`.
 - **waveSystem** compacts dead enemies and handles wave completion / win.
+
+## Nallon hierarchy & special properties (data-driven)
+
+Enemies ("Nallons") form a hierarchy: popping one spawns its `children`
+(e.g. green → blue → red). Special properties are flags on `EnemyDef`, countered
+by tower capabilities (`towerCapabilities` folds base + tier `grants`):
+
+- **camo** — only towers with `camoDetection` can target it (`selectTarget`).
+- **lead** — only shots with `popsLead` deal damage; others fizzle.
+- **regrow** — heals over time (`regrowRate`) until popped.
+- Children **inherit** camo/regrow from their parent.
+
+All of this is content: new Nallons/towers are JSON only — no core changes.
+Original placeholder theme only (coined term "Nallon"); no Ninja Kiwi names/art.
 
 ## What NOT to do (this phase)
 
@@ -138,6 +156,13 @@ sell refund, upgrade costs). Client HUD: money/lives/wave, tower palette,
 click-to-place, and a selection panel (upgrade both paths, sell, set targeting).
 Tests cover spawn timing/count, economy, wave lifecycle, and placement.
 `pnpm dev` runs the client, `pnpm test` is green.
+
+**Milestone 3 (done):** the Nallon enemy hierarchy — popping spawns children
+(RBE cascade), plus special properties (camo, lead, regrow) as data flags and
+matching tower capabilities (`camoDetection`, `popsLead`) unlockable via upgrade
+tiers. Renderer shows per-type colours and camo/lead/regrow indicators; HUD shows
+tower capabilities. Tests cover hierarchy split + child inheritance, camo
+targeting, lead immunity, regrow healing, and capability resolution.
 
 ## How to run
 

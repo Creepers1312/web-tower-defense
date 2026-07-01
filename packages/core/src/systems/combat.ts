@@ -9,26 +9,29 @@
 
 import type { SystemContext } from './context.js';
 import type { EnemyInstance, TargetingMode, Vec2 } from '../types.js';
-import { effectiveStats, activeEffects } from '../upgrade.js';
+import { effectiveStats, activeEffects, towerCapabilities } from '../upgrade.js';
 
 /** Speed of fired projectiles, in world units per second. */
 export const PROJECTILE_SPEED = 420;
 
 /**
  * Choose which enemy a tower at `pos` with the given `range` and `mode` targets.
- * Returns null if no living enemy is in range.
+ * Camo enemies are invisible unless `canSeeCamo` is true. Returns null if no
+ * eligible living enemy is in range.
  */
 export function selectTarget(
   pos: Vec2,
   range: number,
   mode: TargetingMode,
   enemies: EnemyInstance[],
+  canSeeCamo = false,
 ): EnemyInstance | null {
   let best: EnemyInstance | null = null;
   let bestScore = 0;
 
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
+    if (!canSeeCamo && enemy.flags.includes('camo')) continue;
     const d = Math.hypot(enemy.pos.x - pos.x, enemy.pos.y - pos.y);
     if (d > range) continue;
 
@@ -69,7 +72,14 @@ export function combatSystem(ctx: SystemContext): void {
     if (!def) continue;
 
     const stats = effectiveStats(def, tower);
-    const target = selectTarget(tower.pos, stats.range, tower.targeting, state.enemies);
+    const caps = towerCapabilities(def, tower);
+    const target = selectTarget(
+      tower.pos,
+      stats.range,
+      tower.targeting,
+      state.enemies,
+      caps.camoDetection,
+    );
     if (!target) {
       tower.cooldown = 0; // stay ready so we fire as soon as a target appears
       continue;
@@ -83,6 +93,7 @@ export function combatSystem(ctx: SystemContext): void {
       speed: PROJECTILE_SPEED,
       source: tower.id,
       effects: activeEffects(def, tower),
+      popsLead: caps.popsLead,
     });
 
     tower.cooldown = stats.fireRate > 0 ? 1 / stats.fireRate : Infinity;

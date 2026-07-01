@@ -19,6 +19,7 @@ import { spawnSystem } from './systems/spawn.js';
 import { movementSystem } from './systems/movement.js';
 import { combatSystem } from './systems/combat.js';
 import { projectileSystem } from './systems/projectile.js';
+import { regrowSystem } from './systems/regrow.js';
 import { waveSystem } from './systems/wave.js';
 import { createEnemyInstance } from './entities.js';
 import type { EnemyInstance, GameState, MapDef } from './types.js';
@@ -132,6 +133,7 @@ export class World {
     movementSystem(ctx);
     combatSystem(ctx);
     projectileSystem(ctx);
+    regrowSystem(ctx);
     waveSystem(ctx);
 
     // 3. advance the clock

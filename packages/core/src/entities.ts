@@ -28,6 +28,7 @@ export function createEnemyInstance(def: EnemyDef, id: string, start: Vec2): Ene
     speed: def.speed,
     leakDamage: def.leakDamage,
     reward: def.reward,
+    regrowRate: def.regrowRate ?? 0,
     flags: [...def.flags],
     alive: true,
   };
