@@ -21,6 +21,7 @@ import {
   TilingSprite,
 } from 'pixi.js';
 import {
+  distanceToPath,
   effectiveStats,
   selectTarget,
   towerCapabilities,
@@ -188,6 +189,27 @@ export class PixiRenderer {
       this.mapLayer.addChild(new TilingSprite({ texture: grass, width: VIEW_WIDTH, height: VIEW_HEIGHT }));
     } else {
       this.mapLayer.addChild(new Graphics().rect(0, 0, VIEW_WIDTH, VIEW_HEIGHT).fill(0x3f7d3f));
+    }
+
+    // Scatter decorations on the grass, kept clear of the path. Deterministic
+    // (seeded) so they don't jump around between reloads.
+    const decoKeys = ['deco_rock', 'deco_rock2', 'deco_flowers', 'deco_daisy'];
+    const decoTex = (await Promise.all(decoKeys.map((k) => this.loadTile(`/sprites/${k}.png`)))).filter(
+      (t): t is Texture => !!t,
+    );
+    if (decoTex.length && path.length >= 2) {
+      let seed = 20260701;
+      const rnd = (): number => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+      for (let i = 0; i < 24; i++) {
+        const x = 36 + rnd() * (VIEW_WIDTH - 72);
+        const y = 36 + rnd() * (VIEW_HEIGHT - 72);
+        const tex = decoTex[Math.floor(rnd() * decoTex.length)]!;
+        if (distanceToPath({ x, y }, path) < 42) continue; // keep off the path
+        const s = new Sprite(tex);
+        s.anchor.set(0.5);
+        s.position.set(x, y);
+        this.mapLayer.addChild(s);
+      }
     }
 
     if (path.length < 2) return;
