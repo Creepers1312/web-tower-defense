@@ -179,7 +179,7 @@
     "leakDamage": 12,
     "flags": [],
     "color": "#7c3aed",
-    "sprite": "nallon_purple",
+    "sprite": "nallon_blimp",
     "children": [{ "enemyId": "nallon_armored", "count": 4 }]
   },
   {
@@ -191,7 +191,7 @@
     "leakDamage": 24,
     "flags": [],
     "color": "#b91c1c",
-    "sprite": "nallon_red",
+    "sprite": "nallon_behemoth",
     "children": [{ "enemyId": "nallon_blimp", "count": 4 }]
   },
   {
@@ -203,7 +203,7 @@
     "leakDamage": 40,
     "flags": [],
     "color": "#0891b2",
-    "sprite": "nallon_blue",
+    "sprite": "nallon_blimp",
     "children": [{ "enemyId": "nallon_behemoth", "count": 4 }]
   },
   {
@@ -216,7 +216,7 @@
     "flags": ["lead", "camo", "regrow"],
     "regrowRate": 8,
     "color": "#111827",
-    "sprite": "nallon_black",
+    "sprite": "nallon_wraith",
     "children": [{ "enemyId": "nallon_armored", "count": 4 }]
   },
   {
@@ -228,7 +228,7 @@
     "leakDamage": 60,
     "flags": [],
     "color": "#f59e0b",
-    "sprite": "nallon_brown",
+    "sprite": "nallon_wraith",
     "children": [
       { "enemyId": "nallon_colossus", "count": 2 },
       { "enemyId": "nallon_wraith", "count": 3 }
