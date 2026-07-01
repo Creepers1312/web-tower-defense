@@ -496,6 +496,7 @@ export class PixiRenderer {
         const overlay = new Graphics();
         node = { root: new Container(), overlay };
         node.root.addChild(body, overlay);
+        node.body = body;
         this.enemyLayer.addChild(node.root);
         this.enemyNodes.set(enemy.id, node);
       }
@@ -518,8 +519,18 @@ export class PixiRenderer {
       }
       // Bosses (blimps, maxHp >= 100) scale up with their hit count so they read
       // as bosses; regular Nallons stay at 1x.
-      const size = enemy.maxHp >= 100 ? Math.min(4, 1 + Math.log10(enemy.maxHp / 10)) : 1;
+      const isBoss = enemy.maxHp >= 100;
+      const size = isBoss ? Math.min(4, 1 + Math.log10(enemy.maxHp / 10)) : 1;
       node.root.scale.set(size);
+      // Blimps point along the path (their sprite noses up by default); balloons
+      // stay upright. Overlay (HP bar/rings) is separate, so it isn't rotated.
+      if (isBoss && node.body) {
+        const path = this.world.getMap().path;
+        const i = Math.min(enemy.pathIndex, path.length - 2);
+        const a = path[i]!;
+        const b = path[i + 1]!;
+        node.body.rotation = Math.atan2(b.y - a.y, b.x - a.x) + Math.PI / 2;
+      }
       node.root.position.set(enemy.pos.x, enemy.pos.y);
     }
     this.reapNodes(this.enemyNodes, seen, this.enemyLayer);
