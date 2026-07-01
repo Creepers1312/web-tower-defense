@@ -48,5 +48,7 @@ export function createTowerInstance(
     tiers: [0, 0],
     targeting,
     cooldown: 0,
+    abilityCooldown: 0,
+    abilityActive: 0,
   };
 }

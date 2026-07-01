@@ -190,6 +190,8 @@ describe('towerCapabilities', () => {
     tiers: [a, b] as [number, number],
     targeting: 'first' as const,
     cooldown: 0,
+    abilityCooldown: 0,
+    abilityActive: 0,
   });
 
   it('reflects base and tier-granted capabilities', () => {

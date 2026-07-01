@@ -423,6 +423,11 @@ export class PixiRenderer {
       if (tower.id === selectedId) {
         node.overlay.circle(0, 0, TOWER_RADIUS + 4).stroke({ width: 2, color: COLORS.towerSelected });
       }
+      // Pulsing golden ring while an activated ability is buffing this tower.
+      if (tower.abilityActive > 0) {
+        const pulse = TOWER_RADIUS + 7 + Math.sin(this.world.getState().tick * 0.25) * 2;
+        node.overlay.circle(0, 0, pulse).stroke({ width: 2, color: 0xfacc15, alpha: 0.9 });
+      }
       node.root.position.set(tower.pos.x, tower.pos.y);
     }
     this.reapNodes(this.towerNodes, seen, this.towerLayer);

@@ -17,6 +17,7 @@ import type { Registry } from './registry.js';
 import type { SystemContext } from './systems/context.js';
 import { spawnSystem } from './systems/spawn.js';
 import { movementSystem } from './systems/movement.js';
+import { abilitySystem } from './systems/ability.js';
 import { combatSystem } from './systems/combat.js';
 import { projectileSystem } from './systems/projectile.js';
 import { regrowSystem } from './systems/regrow.js';
@@ -130,6 +131,7 @@ export class World {
       events: this.events,
     };
     spawnSystem(ctx);
+    abilitySystem(ctx);
     movementSystem(ctx);
     combatSystem(ctx);
     projectileSystem(ctx);

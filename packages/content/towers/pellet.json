@@ -1,6 +1,6 @@
 {
   "id": "tower_pellet",
-  "name": "Pellet Shooter",
+  "name": "Dart Monkey",
   "cost": 100,
   "range": 120,
   "fireRate": 2,
@@ -13,18 +13,31 @@
   "paths": [
     {
       "tiers": [
-        { "name": "Sharper Pellets", "cost": 80, "modifiers": { "damage": 1 }, "sprite": "dart_a1" },
-        { "name": "Faster Trigger", "cost": 120, "modifiers": { "fireRate": 1 }, "sprite": "dart_a2" },
-        { "name": "Lead Piercer", "cost": 320, "modifiers": { "range": 20, "damage": 1 }, "grants": { "popsLead": true }, "sprite": "dart_a3" },
-        { "name": "Spiked Juggernaut", "cost": 800, "modifiers": { "damage": 3 }, "addEffects": ["pierce"], "sprite": "dart_a4" }
+        { "name": "Long Range Darts", "cost": 120, "modifiers": { "range": 45 } },
+        { "name": "Enhanced Eyesight", "cost": 300, "modifiers": { "range": 20 }, "grants": { "camoDetection": true } },
+        { "name": "Spike-o-pult", "cost": 600, "modifiers": { "damage": 1, "pierce": 5, "fireRate": -0.6 }, "sprite": "dart_a2" },
+        { "name": "Juggernaut", "cost": 1500, "modifiers": { "damage": 4, "pierce": 8 }, "grants": { "popsLead": true }, "sprite": "dart_a4" }
       ]
     },
     {
       "tiers": [
-        { "name": "Wider Sight", "cost": 90, "modifiers": { "range": 30 }, "sprite": "dart_b1" },
-        { "name": "Keen Eyes", "cost": 250, "modifiers": {}, "grants": { "camoDetection": true }, "sprite": "dart_b2" },
-        { "name": "Twin Barrel", "cost": 350, "modifiers": { "fireRate": 2 }, "sprite": "dart_b3" },
-        { "name": "Bullet Storm", "cost": 900, "modifiers": { "fireRate": 4 }, "addEffects": ["multishot"], "sprite": "dart_b4" }
+        { "name": "Sharp Shots", "cost": 140, "modifiers": { "pierce": 1 } },
+        { "name": "Razor Sharp Shots", "cost": 360, "modifiers": { "pierce": 1 } },
+        { "name": "Triple Darts", "cost": 850, "modifiers": { "shots": 2 }, "sprite": "dart_b3" },
+        {
+          "name": "Super Monkey Fan Club",
+          "cost": 2600,
+          "modifiers": { "fireRate": 2, "pierce": 2 },
+          "ability": {
+            "id": "super_monkey_fan_club",
+            "name": "Super Monkey Fan Club",
+            "duration": 15,
+            "cooldown": 60,
+            "radius": 130,
+            "buff": { "fireRate": 3, "range": 1.3 }
+          },
+          "sprite": "dart_b4"
+        }
       ]
     }
   ]

@@ -9,7 +9,7 @@
  */
 
 import type { SystemContext } from './context.js';
-import type { EnemyInstance, ProjectileInstance } from '../types.js';
+import type { EnemyInstance, ProjectileInstance, TowerInstance } from '../types.js';
 import { createEnemyInstance } from '../entities.js';
 
 /** Distance at which a projectile is considered to have hit its target. */
@@ -45,29 +45,53 @@ function popInto(ctx: SystemContext, parent: EnemyInstance): void {
   }
 }
 
-function resolveImpact(ctx: SystemContext, proj: ProjectileInstance, target: EnemyInstance): void {
+/** Radius around the impact within which pierce shots also hit other enemies. */
+export const PIERCE_RADIUS = 40;
+
+/** Damage a single enemy with a projectile (respecting lead), handling kills. */
+function hitEnemy(
+  ctx: SystemContext,
+  proj: ProjectileInstance,
+  tower: TowerInstance | undefined,
+  enemy: EnemyInstance,
+): void {
   const { world, state, registry, dt, events } = ctx;
 
-  // Lead enemies can only be damaged by lead-popping shots; otherwise the
-  // projectile fizzles harmlessly.
-  if (target.flags.includes('lead') && !proj.popsLead) return;
+  // Lead enemies take damage only from lead-popping shots.
+  if (enemy.flags.includes('lead') && !proj.popsLead) return;
 
-  const tower = state.towers.find((t) => t.id === proj.source);
   if (tower) {
     for (const name of proj.effects) {
-      registry.getEffect(name)?.apply({ world, tower, target, dt });
+      registry.getEffect(name)?.apply({ world, tower, target: enemy, dt });
     }
   } else {
-    // Firing tower is gone — fall back to the damage snapshot taken at fire time.
-    target.hp -= proj.damage;
+    enemy.hp -= proj.damage; // firing tower gone → use the snapshot damage
   }
 
-  if (target.alive && target.hp <= 0) {
-    target.hp = 0;
-    target.alive = false;
-    state.money += target.reward;
-    events.emit('onEnemyKilled', { enemyId: target.id, reward: target.reward });
-    popInto(ctx, target);
+  if (enemy.alive && enemy.hp <= 0) {
+    enemy.hp = 0;
+    enemy.alive = false;
+    state.money += enemy.reward;
+    events.emit('onEnemyKilled', { enemyId: enemy.id, reward: enemy.reward });
+    popInto(ctx, enemy);
+  }
+}
+
+function resolveImpact(ctx: SystemContext, proj: ProjectileInstance, target: EnemyInstance): void {
+  const { state } = ctx;
+  const tower = state.towers.find((t) => t.id === proj.source);
+
+  hitEnemy(ctx, proj, tower, target);
+
+  // Pierce: also hit the nearest other enemies within the impact radius.
+  if (proj.pierce > 0) {
+    const others = state.enemies
+      .filter((e) => e.alive && e.id !== target.id)
+      .map((e) => ({ e, d: Math.hypot(e.pos.x - target.pos.x, e.pos.y - target.pos.y) }))
+      .filter((o) => o.d <= PIERCE_RADIUS)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, proj.pierce);
+    for (const { e } of others) hitEnemy(ctx, proj, tower, e);
   }
 }
 

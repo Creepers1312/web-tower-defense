@@ -12,6 +12,7 @@ import {
   canUpgrade,
   effectiveStats,
   towerCapabilities,
+  towerAbility,
   type Registry,
   type TargetingMode,
   type TowerInstance,
@@ -46,6 +47,7 @@ export class Hud {
   private readonly targeting = el<HTMLSelectElement>('targeting');
   private readonly up0 = el<HTMLButtonElement>('up0');
   private readonly up1 = el<HTMLButtonElement>('up1');
+  private readonly ability = el<HTMLButtonElement>('ability');
   private readonly sell = el<HTMLButtonElement>('sell');
   private readonly hint = el<HTMLElement>('hint');
   private readonly paletteButtons = new Map<string, HTMLButtonElement>();
@@ -112,6 +114,11 @@ export class Hud {
     });
     this.up0.addEventListener('click', () => this.upgrade(0));
     this.up1.addEventListener('click', () => this.upgrade(1));
+    this.ability.addEventListener('click', () => {
+      if (this.selectedTowerId) {
+        this.world.submit({ kind: 'ActivateAbility', towerId: this.selectedTowerId });
+      }
+    });
   }
 
   private wireCanvas(): void {
@@ -227,6 +234,23 @@ export class Hud {
 
     this.applyUpgradeButton(this.up0, def, tower, 0);
     this.applyUpgradeButton(this.up1, def, tower, 1);
+
+    const ability = towerAbility(def, tower);
+    if (!ability) {
+      this.ability.style.display = 'none';
+    } else {
+      this.ability.style.display = 'block';
+      if (tower.abilityActive > 0) {
+        this.ability.textContent = `⚡ ${ability.name} — active ${Math.ceil(tower.abilityActive)}s`;
+        this.ability.disabled = true;
+      } else if (tower.abilityCooldown > 0) {
+        this.ability.textContent = `⚡ ${ability.name} — ${Math.ceil(tower.abilityCooldown)}s`;
+        this.ability.disabled = true;
+      } else {
+        this.ability.textContent = `⚡ ${ability.name} — ready`;
+        this.ability.disabled = false;
+      }
+    }
   }
 
   private applyUpgradeButton(
