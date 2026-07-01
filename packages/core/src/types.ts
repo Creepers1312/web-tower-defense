@@ -143,6 +143,8 @@ export interface EnemyInstance {
   speed: number;
   /** Lives the player loses if this enemy leaks (copied from the def). */
   leakDamage: number;
+  /** Money granted on kill (copied from the def). */
+  reward: number;
   flags: string[];
   alive: boolean;
 }
@@ -154,6 +156,10 @@ export interface ProjectileInstance {
   target: string | null;
   damage: number;
   speed: number;
+  /** Id of the tower that fired this projectile (for effect resolution). */
+  source: string;
+  /** Effect names to run on impact (snapshot of the tower's active effects). */
+  effects: string[];
 }
 
 export type GamePhase = 'building' | 'wave' | 'won' | 'lost';
@@ -168,4 +174,12 @@ export interface GameState {
   projectiles: ProjectileInstance[];
   /** Number of fixed simulation steps executed so far. */
   tick: number;
+  /** Active map id (so the state is self-describing / serialisable). */
+  mapId: string;
+  /** Monotonic counter used to mint unique entity ids deterministically. */
+  seq: number;
+  /** Seconds elapsed in the current wave (only meaningful while phase==='wave'). */
+  waveTime: number;
+  /** Per-entry spawned counts for the current wave. */
+  spawned: number[];
 }

@@ -50,7 +50,7 @@ export type {
 } from './commands.js';
 
 // Upgrade rules
-export { canUpgrade, nextTierCost, effectiveStats } from './upgrade.js';
+export { canUpgrade, nextTierCost, effectiveStats, activeEffects } from './upgrade.js';
 
 // Entities
 export { createEnemyInstance, createTowerInstance } from './entities.js';
@@ -59,9 +59,23 @@ export { createEnemyInstance, createTowerInstance } from './entities.js';
 export { progressAlongPath, pathLength } from './path.js';
 export type { PathProgress } from './path.js';
 
+// Placement rules
+export {
+  canPlaceTower,
+  pointInRect,
+  distanceToPath,
+  distanceToSegment,
+  PATH_CLEARANCE,
+  TOWER_SPACING,
+} from './placement.js';
+
 // Systems
+export type { SystemContext } from './systems/context.js';
+export { spawnSystem } from './systems/spawn.js';
 export { movementSystem } from './systems/movement.js';
-export type { MovementContext } from './systems/movement.js';
+export { combatSystem, selectTarget, PROJECTILE_SPEED } from './systems/combat.js';
+export { projectileSystem, HIT_RADIUS } from './systems/projectile.js';
+export { waveSystem } from './systems/wave.js';
 
 // World
 export { World, createInitialState } from './world.js';

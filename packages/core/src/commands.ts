@@ -13,6 +13,7 @@ import type { Registry } from './registry.js';
 import type { GameState, TargetingMode, Vec2 } from './types.js';
 import { createTowerInstance } from './entities.js';
 import { canUpgrade } from './upgrade.js';
+import { canPlaceTower } from './placement.js';
 
 // --- command union ---------------------------------------------------------
 
@@ -80,7 +81,7 @@ export function applyCommand(
       setTargeting(state, cmd);
       return;
     case 'StartWave':
-      startWave(state, events);
+      startWave(state, registry, events);
       return;
   }
 }
@@ -95,8 +96,12 @@ function placeTower(
   if (!def) return;
   if (state.money < def.cost) return;
 
+  // Validate the location against the active map (buildable zones, path, towers).
+  const map = registry.getMap(state.mapId);
+  if (map && !canPlaceTower(map, cmd.pos, state.towers)) return;
+
   state.money -= def.cost;
-  const id = `t${state.tick}-${state.towers.length}`;
+  const id = `t${state.seq++}`;
   state.towers.push(createTowerInstance(def, id, cmd.pos));
   events.emit('onTowerPlaced', { towerId: id });
 }
@@ -158,13 +163,17 @@ function setTargeting(state: GameState, cmd: SetTargetingCommand): void {
 }
 
 /**
- * Move from the building phase into the wave phase.
- *
- * NOTE (Milestone 1): actual enemy spawning is not yet wired up — the wave
- * system arrives in a later milestone. This only transitions the phase.
+ * Move from the building phase into the wave phase and arm the spawn schedule
+ * for the current wave. The spawnSystem then releases enemies over time.
  */
-function startWave(state: GameState, events: EventBus): void {
+function startWave(state: GameState, registry: Registry, events: EventBus): void {
   if (state.phase !== 'building') return;
+  const map = registry.getMap(state.mapId);
+  const wave = map?.waves[state.waveIndex];
+  if (!wave) return; // no wave to start (e.g. all waves cleared)
+
   state.phase = 'wave';
+  state.waveTime = 0;
+  state.spawned = new Array(wave.entries.length).fill(0);
   events.emit('onWaveStart', { waveIndex: state.waveIndex });
 }

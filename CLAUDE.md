@@ -103,12 +103,25 @@ Tests live in `packages/core` (Vitest). Covered / to cover:
 `canUpgrade`, economy (money/kills/leak), wave spawn (timing/count), and
 movement along the path.
 
+## Simulation systems (run in order each tick)
+
+`World.step()` drains commands, then runs the systems in this order:
+`spawnSystem` → `movementSystem` → `combatSystem` → `projectileSystem` →
+`waveSystem`. All systems take a `SystemContext` and mutate the plain state.
+
+- **spawnSystem** releases the current wave's enemies over time (`delay`/`spacing`),
+  tracked by `state.waveTime` + `state.spawned[]`.
+- **movementSystem** moves enemies; leaking costs `lives` and can end the game.
+- **combatSystem** ticks tower cooldowns, picks a target (`selectTarget`) and
+  fires a projectile carrying effective damage + a snapshot of active effects.
+- **projectileSystem** flies projectiles to their target and, on impact, runs the
+  tower's effects (damage is dealt by the `directDamage` effect); kills grant money.
+- **waveSystem** compacts dead enemies and handles wave completion / win.
+
 ## What NOT to do (this phase)
 
 - No co-op, no server, no WebSocket, no Docker.
 - No map editor, no meta-progression / currency, no shop.
-- Do **not** fully implement all systems (targeting/combat/economy) —
-  **movement only** for now.
 - No real graphic assets — coloured circles / rectangles as placeholders.
 - Do not pre-build the rest of the roadmap.
 
@@ -116,9 +129,15 @@ movement along the path.
 
 **Milestone 1 (done):** runnable monorepo; all types/contracts defined; one
 example map + enemy as JSON; `World` with fixed timestep + `movementSystem`;
-`PixiRenderer` shows one enemy following the path; a test proving correct
-movement over time (plus `canUpgrade` tests). `pnpm dev` runs the client,
-`pnpm test` is green.
+`PixiRenderer` shows one enemy following the path; movement + `canUpgrade` tests.
+
+**Milestone 2 (done):** full gameplay loop — wave spawning, tower placement
+(with buildable-zone/path/overlap validation), combat (targeting modes +
+projectiles + composable effects), and economy (kills→money, leaks→lives,
+sell refund, upgrade costs). Client HUD: money/lives/wave, tower palette,
+click-to-place, and a selection panel (upgrade both paths, sell, set targeting).
+Tests cover spawn timing/count, economy, wave lifecycle, and placement.
+`pnpm dev` runs the client, `pnpm test` is green.
 
 ## How to run
 

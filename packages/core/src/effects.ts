@@ -7,12 +7,13 @@
  * new ability can be added purely as data + one registered effect, with no
  * changes to the core simulation loop.
  *
- * NOTE (Milestone 1): combat is not yet ticked, so these effects are registered
- * and validated but not invoked at runtime. They exist to lock in the seam.
+ * As of Milestone 2 the combat system invokes a tower's active effects on every
+ * projectile impact, passing the firing tower and the enemy it hit.
  */
 
 import type { World } from './world.js';
 import type { EnemyInstance, TowerInstance } from './types.js';
+import { effectiveStats } from './upgrade.js';
 
 export interface EffectContext {
   world: World;
@@ -38,27 +39,29 @@ export const directDamage: Effect = {
     if (!target) return;
     const def = world.getRegistry().getTower(tower.type);
     if (!def) return;
-    // Damage will later be combined with upgrade modifiers; base value for now.
-    target.hp -= def.damage;
+    // Use the tower's effective (upgraded) damage, read from its data.
+    target.hp -= effectiveStats(def, tower).damage;
   },
 };
 
 /**
  * Placeholder: allow a shot to hit multiple enemies in a line.
- * Concrete behaviour arrives with the combat system in a later milestone.
+ * The seam is wired (this runs on impact), but the multi-hit geometry is left
+ * for a later milestone — it currently does nothing on its own.
  */
 export const pierce: Effect = {
   apply() {
-    /* no-op until the combat/projectile system exists */
+    /* no-op: reserved for multi-hit behaviour */
   },
 };
 
 /**
  * Placeholder: fire several projectiles per shot.
- * Concrete behaviour arrives with the combat system in a later milestone.
+ * The seam is wired (this runs on impact), but the extra-projectile logic is
+ * left for a later milestone — it currently does nothing on its own.
  */
 export const multishot: Effect = {
   apply() {
-    /* no-op until the combat/projectile system exists */
+    /* no-op: reserved for extra-projectile behaviour */
   },
 };

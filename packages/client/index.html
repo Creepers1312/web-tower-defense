@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tower Defense — Milestone 1</title>
+    <title>Tower Defense — Milestone 2</title>
     <style>
       :root {
         color-scheme: dark;
@@ -13,17 +13,34 @@
         margin: 0;
         min-height: 100vh;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 12px;
         background: #0f172a;
         color: #e2e8f0;
       }
-      h1 {
-        font-size: 18px;
-        font-weight: 600;
-        margin: 0;
+      #game {
+        display: grid;
+        grid-template-columns: auto 220px;
+        grid-template-rows: auto auto;
+        gap: 10px;
+        padding: 12px;
+      }
+      #topbar {
+        grid-column: 1 / 3;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 14px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 8px 14px;
+      }
+      #topbar .stat b {
+        color: #f8fafc;
+      }
+      #topbar .spacer {
+        flex: 1;
       }
       #app {
         border: 1px solid #334155;
@@ -31,17 +48,119 @@
         overflow: hidden;
         line-height: 0;
       }
-      p {
-        margin: 0;
+      #sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .panel {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 10px;
         font-size: 13px;
+      }
+      .panel h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
         color: #94a3b8;
+        margin: 0 0 8px;
+      }
+      button {
+        font: inherit;
+        color: #e2e8f0;
+        background: #334155;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        padding: 7px 10px;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+      }
+      button:hover:not(:disabled) {
+        background: #3f4d63;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      button.active {
+        outline: 2px solid #38bdf8;
+      }
+      button.primary {
+        background: #2563eb;
+        border-color: #3b82f6;
+        text-align: center;
+      }
+      button.danger {
+        background: #7f1d1d;
+        border-color: #b91c1c;
+        text-align: center;
+      }
+      .row {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .muted {
+        color: #94a3b8;
+      }
+      #hint {
+        grid-column: 1 / 2;
+        font-size: 12px;
+        color: #94a3b8;
+        min-height: 16px;
+      }
+      select {
+        font: inherit;
+        color: #e2e8f0;
+        background: #334155;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        padding: 5px;
+        width: 100%;
       }
     </style>
   </head>
   <body>
-    <h1>Tower Defense — Milestone 1</h1>
-    <div id="app"></div>
-    <p>One enemy follows the map path. Simulation runs at a fixed 60 Hz.</p>
+    <div id="game">
+      <div id="topbar">
+        <span class="stat">💰 <b id="money">0</b></span>
+        <span class="stat">❤️ <b id="lives">0</b></span>
+        <span class="stat">🌊 Wave <b id="wave">0</b></span>
+        <span class="stat">Phase: <b id="phase">—</b></span>
+        <span class="spacer"></span>
+        <button id="startWave" class="primary" style="width:auto">Start Wave</button>
+      </div>
+
+      <div id="app"></div>
+
+      <div id="sidebar">
+        <div class="panel">
+          <h2>Towers</h2>
+          <div id="palette"></div>
+        </div>
+        <div class="panel" id="selectedPanel" style="display:none">
+          <h2>Selected Tower</h2>
+          <div id="selectedInfo" class="muted">—</div>
+          <label class="muted" style="display:block;margin-top:8px">Targeting
+            <select id="targeting">
+              <option value="first">First</option>
+              <option value="last">Last</option>
+              <option value="close">Close</option>
+              <option value="strong">Strong</option>
+            </select>
+          </label>
+          <div class="row"><button id="up0"></button></div>
+          <div class="row"><button id="up1"></button></div>
+          <div class="row"><button id="sell" class="danger">Sell</button></div>
+        </div>
+      </div>
+
+      <div id="hint"></div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

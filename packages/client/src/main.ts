@@ -1,36 +1,32 @@
 /**
  * Client entry point.
  *
- * Wires together the data-driven registry, the simulation `World` and the
- * `PixiRenderer`, then runs a fixed-timestep game loop:
- *
- *   - The simulation advances in fixed 1/60 s steps (deterministic).
- *   - Rendering happens once per animation frame, decoupled from the sim.
- *
- * Milestone 1 goal: exactly one enemy visibly walks the map path.
+ * Wires the data-driven registry, the simulation `World`, the `PixiRenderer`,
+ * and the `Hud`, then runs a fixed-timestep game loop:
+ *   - simulation advances in fixed 1/60 s steps (deterministic),
+ *   - rendering + HUD refresh happen once per animation frame.
  */
 
 import { Registry, World, registerBuiltinEffects } from '@td/core';
-import { contentAddon, DEFAULT_ENEMY_ID, DEFAULT_MAP_ID } from '@td/content';
+import { contentAddon, DEFAULT_MAP_ID } from '@td/content';
 import { PixiRenderer } from './PixiRenderer.js';
+import { Hud } from './hud.js';
 
 async function main(): Promise<void> {
-  // 1. Build the registry from core built-ins + content addon (data-driven).
   const registry = new Registry();
   registerBuiltinEffects(registry);
   registry.use(contentAddon);
 
-  // 2. Create the world on the example map and seed the single demo enemy.
   const world = new World(registry, DEFAULT_MAP_ID);
-  world.spawnEnemy(DEFAULT_ENEMY_ID);
 
-  // 3. Set up rendering.
   const mount = document.getElementById('app');
   if (!mount) throw new Error('Missing #app mount element');
-  const renderer = new PixiRenderer(world);
+  const renderer = new PixiRenderer(world, registry);
   await renderer.init(mount);
 
-  // 4. Fixed-timestep loop with an accumulator.
+  const hud = new Hud(world, registry, renderer);
+
+  // Fixed-timestep loop with an accumulator.
   const STEP_MS = World.TIMESTEP * 1000;
   const MAX_FRAME_MS = 250; // clamp to avoid a spiral of death after tab stalls
   let previous = performance.now();
@@ -39,13 +35,12 @@ async function main(): Promise<void> {
   const frame = (now: number): void => {
     accumulator += Math.min(now - previous, MAX_FRAME_MS);
     previous = now;
-
     while (accumulator >= STEP_MS) {
       world.step();
       accumulator -= STEP_MS;
     }
-
-    renderer.render();
+    renderer.render(hud.view());
+    hud.update();
     requestAnimationFrame(frame);
   };
 

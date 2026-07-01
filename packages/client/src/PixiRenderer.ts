@@ -1,36 +1,66 @@
 /**
  * PixiRenderer — reads the read-only simulation state and draws it.
  *
- * This is the whole "darstellung" side of the strict simulation/rendering
- * split: it never mutates the world, it only observes `world.getState()` and
- * pushes the result into PixiJS display objects. All graphics are simple
- * placeholder shapes (coloured circles / lines) — no external assets.
+ * The whole rendering side of the strict simulation/rendering split: it never
+ * mutates the world, only observes `world.getState()` and pushes the result into
+ * PixiJS display objects. All graphics are simple placeholder shapes.
  */
 
 import { Application, Container, Graphics } from 'pixi.js';
-import type { World } from '@td/core';
+import { effectiveStats, type Registry, type Vec2, type World } from '@td/core';
 
-const VIEW_WIDTH = 800;
-const VIEW_HEIGHT = 600;
+export const VIEW_WIDTH = 800;
+export const VIEW_HEIGHT = 600;
 
 const COLORS = {
   background: 0x1e293b,
   path: 0x475569,
   enemy: 0xef4444,
+  enemyHpBg: 0x1f2937,
+  enemyHp: 0x22c55e,
+  tower: 0x38bdf8,
+  towerSelected: 0xfacc15,
+  projectile: 0xfde047,
+  rangeFill: 0x38bdf8,
+  placeOk: 0x22c55e,
+  placeBad: 0xef4444,
 } as const;
 
 const ENEMY_RADIUS = 12;
+const TOWER_RADIUS = 13;
 const PATH_WIDTH = 34;
+
+/** What the renderer should highlight this frame (selection / placement ghost). */
+export interface RenderView {
+  selectedTowerId: string | null;
+  placing: { pos: Vec2; range: number; valid: boolean } | null;
+}
 
 export class PixiRenderer {
   private readonly app = new Application();
+
+  // Layers, back-to-front.
+  private readonly rangeLayer = new Container();
+  private readonly towerLayer = new Container();
   private readonly enemyLayer = new Container();
-  /** One reusable Graphics per live enemy, keyed by enemy id. */
+  private readonly projectileLayer = new Container();
+  private readonly ghostLayer = new Container();
+
+  private readonly towerGfx = new Map<string, Graphics>();
   private readonly enemyGfx = new Map<string, Graphics>();
+  private readonly projectileGfx = new Map<string, Graphics>();
+  private readonly range = new Graphics();
+  private readonly ghost = new Graphics();
 
-  constructor(private readonly world: World) {}
+  constructor(
+    private readonly world: World,
+    private readonly registry: Registry,
+  ) {}
 
-  /** Initialise the Pixi application and draw the static map. */
+  get canvas(): HTMLCanvasElement {
+    return this.app.canvas;
+  }
+
   async init(parent: HTMLElement): Promise<void> {
     await this.app.init({
       width: VIEW_WIDTH,
@@ -41,49 +71,142 @@ export class PixiRenderer {
     parent.appendChild(this.app.canvas);
 
     this.drawPath();
-    this.app.stage.addChild(this.enemyLayer);
+    this.rangeLayer.addChild(this.range);
+    this.ghostLayer.addChild(this.ghost);
+    this.app.stage.addChild(
+      this.rangeLayer,
+      this.towerLayer,
+      this.enemyLayer,
+      this.projectileLayer,
+      this.ghostLayer,
+    );
   }
 
-  /** Draw the map path once as a thick rounded polyline. */
+  /** Convert a DOM mouse event position to world coordinates. */
+  screenToWorld(clientX: number, clientY: number): Vec2 {
+    const rect = this.app.canvas.getBoundingClientRect();
+    const scaleX = VIEW_WIDTH / rect.width;
+    const scaleY = VIEW_HEIGHT / rect.height;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
   private drawPath(): void {
     const path = this.world.getMap().path;
     if (path.length < 2) return;
-
     const g = new Graphics();
     const first = path[0]!;
     g.moveTo(first.x, first.y);
-    for (let i = 1; i < path.length; i++) {
-      const point = path[i]!;
-      g.lineTo(point.x, point.y);
-    }
+    for (let i = 1; i < path.length; i++) g.lineTo(path[i]!.x, path[i]!.y);
     g.stroke({ width: PATH_WIDTH, color: COLORS.path, cap: 'round', join: 'round' });
-    this.app.stage.addChild(g);
+    this.app.stage.addChildAt(g, 0);
   }
 
-  /**
-   * Sync display objects with the current state. Called once per animation
-   * frame (rendering cadence is independent of the fixed simulation timestep).
-   */
-  render(): void {
+  render(view: RenderView): void {
     const state = this.world.getState();
-    const seen = new Set<string>();
+    this.syncTowers(view.selectedTowerId);
+    this.syncEnemies();
+    this.syncProjectiles();
+    this.drawRange(view);
+    this.drawGhost(view);
+    void state;
+  }
 
-    for (const enemy of state.enemies) {
+  private syncTowers(selectedId: string | null): void {
+    const towers = this.world.getState().towers;
+    const seen = new Set<string>();
+    for (const tower of towers) {
+      seen.add(tower.id);
+      let g = this.towerGfx.get(tower.id);
+      if (!g) {
+        g = new Graphics();
+        this.towerLayer.addChild(g);
+        this.towerGfx.set(tower.id, g);
+      }
+      const selected = tower.id === selectedId;
+      g.clear();
+      g.circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
+      if (selected) g.circle(0, 0, TOWER_RADIUS + 3).stroke({ width: 2, color: COLORS.towerSelected });
+      // A little "barrel" tick so towers read as directional placeholders.
+      g.rect(-2, -TOWER_RADIUS - 4, 4, 6).fill(COLORS.tower);
+      g.position.set(tower.pos.x, tower.pos.y);
+    }
+    this.reap(this.towerGfx, seen, this.towerLayer);
+  }
+
+  private syncEnemies(): void {
+    const enemies = this.world.getState().enemies;
+    const seen = new Set<string>();
+    for (const enemy of enemies) {
       seen.add(enemy.id);
       let g = this.enemyGfx.get(enemy.id);
       if (!g) {
-        g = new Graphics().circle(0, 0, ENEMY_RADIUS).fill(COLORS.enemy);
+        g = new Graphics();
         this.enemyLayer.addChild(g);
         this.enemyGfx.set(enemy.id, g);
       }
+      const frac = enemy.maxHp > 0 ? Math.max(0, enemy.hp / enemy.maxHp) : 0;
+      g.clear();
+      g.circle(0, 0, ENEMY_RADIUS).fill(COLORS.enemy);
+      // HP bar above the enemy.
+      const w = 22;
+      g.rect(-w / 2, -ENEMY_RADIUS - 8, w, 4).fill(COLORS.enemyHpBg);
+      g.rect(-w / 2, -ENEMY_RADIUS - 8, w * frac, 4).fill(COLORS.enemyHp);
       g.position.set(enemy.pos.x, enemy.pos.y);
     }
+    this.reap(this.enemyGfx, seen, this.enemyLayer);
+  }
 
-    // Remove graphics for enemies that no longer exist (killed / leaked).
-    for (const [id, g] of this.enemyGfx) {
+  private syncProjectiles(): void {
+    const projectiles = this.world.getState().projectiles;
+    const seen = new Set<string>();
+    for (const p of projectiles) {
+      seen.add(p.id);
+      let g = this.projectileGfx.get(p.id);
+      if (!g) {
+        g = new Graphics().circle(0, 0, 3).fill(COLORS.projectile);
+        this.projectileLayer.addChild(g);
+        this.projectileGfx.set(p.id, g);
+      }
+      g.position.set(p.pos.x, p.pos.y);
+    }
+    this.reap(this.projectileGfx, seen, this.projectileLayer);
+  }
+
+  private drawRange(view: RenderView): void {
+    this.range.clear();
+    let center: Vec2 | null = null;
+    let radius = 0;
+    if (view.selectedTowerId) {
+      const tower = this.world.getState().towers.find((t) => t.id === view.selectedTowerId);
+      const def = tower ? this.registry.getTower(tower.type) : undefined;
+      if (tower && def) {
+        center = tower.pos;
+        radius = effectiveStats(def, tower).range;
+      }
+    } else if (view.placing) {
+      center = view.placing.pos;
+      radius = view.placing.range;
+    }
+    if (center && radius > 0) {
+      this.range.circle(center.x, center.y, radius).fill({ color: COLORS.rangeFill, alpha: 0.12 });
+      this.range.circle(center.x, center.y, radius).stroke({ width: 1, color: COLORS.rangeFill, alpha: 0.4 });
+    }
+  }
+
+  private drawGhost(view: RenderView): void {
+    this.ghost.clear();
+    if (!view.placing) return;
+    const { pos, valid } = view.placing;
+    const color = valid ? COLORS.placeOk : COLORS.placeBad;
+    this.ghost.circle(pos.x, pos.y, TOWER_RADIUS).fill({ color, alpha: 0.5 });
+  }
+
+  private reap(map: Map<string, Graphics>, seen: Set<string>, layer: Container): void {
+    for (const [id, g] of map) {
       if (!seen.has(id)) {
+        layer.removeChild(g);
         g.destroy();
-        this.enemyGfx.delete(id);
+        map.delete(id);
       }
     }
   }
