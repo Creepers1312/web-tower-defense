@@ -10,7 +10,16 @@
  * shapes otherwise. Sprites use nearest-neighbour scaling to stay crisp.
  */
 
-import { AnimatedSprite, Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import {
+  AnimatedSprite,
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Texture,
+  TilingSprite,
+} from 'pixi.js';
 import {
   effectiveStats,
   selectTarget,
@@ -107,6 +116,7 @@ export class PixiRenderer {
   private readonly app = new Application();
 
   // Layers, back-to-front.
+  private readonly mapLayer = new Container();
   private readonly rangeLayer = new Container();
   private readonly towerLayer = new Container();
   private readonly enemyLayer = new Container();
@@ -152,10 +162,11 @@ export class PixiRenderer {
     parent.appendChild(this.app.canvas);
 
     await this.loadSprites();
-    this.drawPath();
+    await this.buildMap();
     this.rangeLayer.addChild(this.range);
     this.ghostLayer.addChild(this.ghost);
     this.app.stage.addChild(
+      this.mapLayer,
       this.rangeLayer,
       this.towerLayer,
       this.enemyLayer,
@@ -163,6 +174,52 @@ export class PixiRenderer {
       this.popLayer,
       this.ghostLayer,
     );
+  }
+
+  /** Build the textured map: tiled grass background + a textured path following
+   *  the polyline (a grass-edge rim under a sand-tiled path). Falls back to a
+   *  flat colour + grey line if the tiles are missing. */
+  private async buildMap(): Promise<void> {
+    const path = this.world.getMap().path;
+    const grass = await this.loadTile('/sprites/tile_grass.png');
+    const sand = await this.loadTile('/sprites/tile_path.png');
+
+    if (grass) {
+      this.mapLayer.addChild(new TilingSprite({ texture: grass, width: VIEW_WIDTH, height: VIEW_HEIGHT }));
+    } else {
+      this.mapLayer.addChild(new Graphics().rect(0, 0, VIEW_WIDTH, VIEW_HEIGHT).fill(0x3f7d3f));
+    }
+
+    if (path.length < 2) return;
+    const stroke = (width: number): Graphics => {
+      const g = new Graphics();
+      g.moveTo(path[0]!.x, path[0]!.y);
+      for (let i = 1; i < path.length; i++) g.lineTo(path[i]!.x, path[i]!.y);
+      g.stroke({ width, color: 0xffffff, cap: 'round', join: 'round' });
+      return g;
+    };
+
+    // Darker grass rim just wider than the path, for definition.
+    const rim = stroke(PATH_WIDTH + 8);
+    rim.tint = 0x5a7a34;
+    this.mapLayer.addChild(rim);
+
+    if (sand) {
+      const sandSprite = new TilingSprite({ texture: sand, width: VIEW_WIDTH, height: VIEW_HEIGHT });
+      const mask = stroke(PATH_WIDTH);
+      this.mapLayer.addChild(sandSprite, mask);
+      sandSprite.mask = mask;
+    } else {
+      this.mapLayer.addChild(stroke(PATH_WIDTH)); // white fallback line
+    }
+  }
+
+  private async loadTile(url: string): Promise<Texture | null> {
+    try {
+      return await Assets.load<Texture>(url);
+    } catch {
+      return null;
+    }
   }
 
   /** Load every sprite referenced by content, keyed by its sprite name.
@@ -228,17 +285,6 @@ export class PixiRenderer {
     const scaleX = VIEW_WIDTH / rect.width;
     const scaleY = VIEW_HEIGHT / rect.height;
     return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
-  }
-
-  private drawPath(): void {
-    const path = this.world.getMap().path;
-    if (path.length < 2) return;
-    const g = new Graphics();
-    const first = path[0]!;
-    g.moveTo(first.x, first.y);
-    for (let i = 1; i < path.length; i++) g.lineTo(path[i]!.x, path[i]!.y);
-    g.stroke({ width: PATH_WIDTH, color: COLORS.path, cap: 'round', join: 'round' });
-    this.app.stage.addChildAt(g, 0);
   }
 
   render(view: RenderView): void {
