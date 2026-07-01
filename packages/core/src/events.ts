@@ -15,6 +15,7 @@ export interface EventMap {
   onTowerPlaced: { towerId: string };
   onTowerSold: { towerId: string; refund: number };
   onTowerUpgraded: { towerId: string; path: 0 | 1; tier: number };
+  onAbilityActivated: { towerId: string; abilityId: string };
 }
 
 export type EventName = keyof EventMap;

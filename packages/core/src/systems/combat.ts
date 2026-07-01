@@ -9,7 +9,7 @@
 
 import type { SystemContext } from './context.js';
 import type { EnemyInstance, TargetingMode, Vec2 } from '../types.js';
-import { effectiveStats, activeEffects, towerCapabilities } from '../upgrade.js';
+import { effectiveStats, activeEffects, towerCapabilities, abilityBuff } from '../upgrade.js';
 
 /** Speed of fired projectiles, in world units per second. */
 export const PROJECTILE_SPEED = 420;
@@ -102,6 +102,11 @@ export function combatSystem(ctx: SystemContext): void {
     if (!def) continue;
 
     const stats = effectiveStats(def, tower);
+    // Fold in any active ability buff (multiplicative) from nearby towers.
+    const buff = abilityBuff(state, (id) => registry.getTower(id), tower);
+    stats.fireRate *= buff.fireRate;
+    stats.damage *= buff.damage;
+    stats.range *= buff.range;
     const caps = towerCapabilities(def, tower);
     const targets = selectTargets(
       tower.pos,

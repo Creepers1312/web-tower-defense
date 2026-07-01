@@ -6,11 +6,18 @@
  * branch while dabbling in the other" constraint.
  */
 
-import type { StatModifiers, TowerDef, TowerInstance } from './types.js';
+import type { AbilityDef, GameState, StatModifiers, TowerDef, TowerInstance } from './types.js';
 
 export interface ResolvedCapabilities {
   camoDetection: boolean;
   popsLead: boolean;
+}
+
+/** Multipliers applied to a tower's stats by any active nearby ability. */
+export interface AbilityBuff {
+  fireRate: number;
+  damage: number;
+  range: number;
 }
 
 /** The path index not equal to `path`. */
@@ -114,4 +121,52 @@ export function towerCapabilities(def: TowerDef, tower: TowerInstance): Resolved
   }
 
   return { camoDetection, popsLead };
+}
+
+/**
+ * The activated ability a tower currently has, or null. The deepest purchased
+ * tier that carries an ability wins (later tiers override earlier ones).
+ */
+export function towerAbility(def: TowerDef, tower: TowerInstance): AbilityDef | null {
+  let ability: AbilityDef | null = null;
+
+  for (let path = 0 as 0 | 1; path <= 1; path = (path + 1) as 0 | 1) {
+    const level = tower.tiers[path];
+    for (let t = 0; t < level; t++) {
+      const a = def.paths[path].tiers[t].ability;
+      if (a) ability = a;
+    }
+  }
+
+  return ability;
+}
+
+/**
+ * Combined buff multipliers applied to `tower` right now by every ally whose
+ * ability is currently active and whose radius covers this tower (a tower's own
+ * active ability buffs itself). Returns 1× multipliers when nothing applies.
+ */
+export function abilityBuff(
+  state: GameState,
+  getTower: (id: string) => TowerDef | undefined,
+  tower: TowerInstance,
+): AbilityBuff {
+  let fireRate = 1;
+  let damage = 1;
+  let range = 1;
+
+  for (const source of state.towers) {
+    if (source.abilityActive <= 0) continue;
+    const sourceDef = getTower(source.type);
+    if (!sourceDef) continue;
+    const ability = towerAbility(sourceDef, source);
+    if (!ability) continue;
+    const d = Math.hypot(source.pos.x - tower.pos.x, source.pos.y - tower.pos.y);
+    if (d > ability.radius) continue;
+    fireRate *= ability.buff.fireRate ?? 1;
+    damage *= ability.buff.damage ?? 1;
+    range *= ability.buff.range ?? 1;
+  }
+
+  return { fireRate, damage, range };
 }

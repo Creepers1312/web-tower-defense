@@ -12,7 +12,7 @@ import type { EventBus } from './events.js';
 import type { Registry } from './registry.js';
 import type { GameState, TargetingMode, Vec2 } from './types.js';
 import { createTowerInstance } from './entities.js';
-import { canUpgrade } from './upgrade.js';
+import { canUpgrade, towerAbility } from './upgrade.js';
 import { canPlaceTower } from './placement.js';
 
 // --- command union ---------------------------------------------------------
@@ -44,12 +44,18 @@ export interface StartWaveCommand {
   kind: 'StartWave';
 }
 
+export interface ActivateAbilityCommand {
+  kind: 'ActivateAbility';
+  towerId: string;
+}
+
 export type Command =
   | PlaceTowerCommand
   | UpgradeCommand
   | SellTowerCommand
   | SetTargetingCommand
-  | StartWaveCommand;
+  | StartWaveCommand
+  | ActivateAbilityCommand;
 
 /** Fraction of the invested money returned when selling a tower. */
 export const SELL_REFUND_RATE = 0.7;
@@ -82,6 +88,9 @@ export function applyCommand(
       return;
     case 'StartWave':
       startWave(state, registry, events);
+      return;
+    case 'ActivateAbility':
+      activateAbility(state, registry, cmd, events);
       return;
   }
 }
@@ -154,6 +163,30 @@ function sellTower(
   state.money += refund;
   state.towers.splice(index, 1);
   events.emit('onTowerSold', { towerId: tower.id, refund });
+}
+
+/**
+ * Trigger a tower's activated ability. Ignored if the tower has no ability or it
+ * is still on cooldown. Starts the buff (`abilityActive`) and the recharge
+ * clock (`abilityCooldown`).
+ */
+function activateAbility(
+  state: GameState,
+  registry: Registry,
+  cmd: ActivateAbilityCommand,
+  events: EventBus,
+): void {
+  const tower = state.towers.find((t) => t.id === cmd.towerId);
+  if (!tower) return;
+  if (tower.abilityCooldown > 0) return;
+  const def = registry.getTower(tower.type);
+  if (!def) return;
+  const ability = towerAbility(def, tower);
+  if (!ability) return;
+
+  tower.abilityActive = ability.duration;
+  tower.abilityCooldown = ability.cooldown;
+  events.emit('onAbilityActivated', { towerId: tower.id, abilityId: ability.id });
 }
 
 function setTargeting(state: GameState, cmd: SetTargetingCommand): void {

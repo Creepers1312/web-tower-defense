@@ -57,6 +57,27 @@ export type TowerCapabilities = Partial<{
   popsLead: boolean;
 }>;
 
+/**
+ * An activated ability unlocked by an upgrade tier. When the player triggers it,
+ * every allied tower within `radius` (including the source) gets its stats
+ * multiplied by `buff` for `duration` seconds; the ability then recharges over
+ * `cooldown` seconds. Purely data — the buff is resolved each tick.
+ */
+export interface AbilityDef {
+  /** Stable id (for the renderer / analytics). */
+  id: string;
+  /** Human-readable name shown on the activate button. */
+  name: string;
+  /** Seconds the buff stays active once triggered. */
+  duration: number;
+  /** Seconds before the ability can be triggered again (measured from trigger). */
+  cooldown: number;
+  /** World-unit radius of allied towers affected (source tower included). */
+  radius: number;
+  /** Multipliers applied to affected towers' stats while active. */
+  buff: Partial<{ fireRate: number; damage: number; range: number }>;
+}
+
 export interface UpgradeTier {
   name: string;
   cost: number;
@@ -66,6 +87,8 @@ export interface UpgradeTier {
   addEffects?: string[];
   /** Capabilities this tier unlocks (e.g. camo detection, lead popping). */
   grants?: TowerCapabilities;
+  /** Activated ability this tier unlocks (deepest reached tier wins). */
+  ability?: AbilityDef;
   /** Sprite key shown once this tier is the tower's highest reached (renderer). */
   sprite?: string;
 }
@@ -161,6 +184,10 @@ export interface TowerInstance {
   targeting: TargetingMode;
   /** Seconds remaining until this tower can fire again. */
   cooldown: number;
+  /** Seconds until an activated ability can be triggered again (0 = ready). */
+  abilityCooldown: number;
+  /** Seconds of ability buff remaining (0 = not active). */
+  abilityActive: number;
 }
 
 export interface EnemyInstance {

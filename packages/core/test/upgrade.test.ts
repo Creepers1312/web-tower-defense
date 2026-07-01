@@ -10,6 +10,8 @@ function tower(a: number, b: number): TowerInstance {
     tiers: [a, b],
     targeting: 'first',
     cooldown: 0,
+    abilityCooldown: 0,
+    abilityActive: 0,
   };
 }
 

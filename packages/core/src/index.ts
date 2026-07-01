@@ -12,6 +12,7 @@ export type {
   TargetingMode,
   StatModifiers,
   TowerCapabilities,
+  AbilityDef,
   UpgradeTier,
   UpgradePath,
   TowerDef,
@@ -49,6 +50,7 @@ export type {
   SellTowerCommand,
   SetTargetingCommand,
   StartWaveCommand,
+  ActivateAbilityCommand,
 } from './commands.js';
 
 // Upgrade rules
@@ -58,8 +60,10 @@ export {
   effectiveStats,
   activeEffects,
   towerCapabilities,
+  towerAbility,
+  abilityBuff,
 } from './upgrade.js';
-export type { ResolvedCapabilities } from './upgrade.js';
+export type { ResolvedCapabilities, AbilityBuff } from './upgrade.js';
 
 // Entities
 export { createEnemyInstance, createTowerInstance } from './entities.js';
@@ -81,6 +85,7 @@ export {
 // Systems
 export type { SystemContext } from './systems/context.js';
 export { spawnSystem } from './systems/spawn.js';
+export { abilitySystem } from './systems/ability.js';
 export { movementSystem } from './systems/movement.js';
 export { combatSystem, selectTarget, selectTargets, PROJECTILE_SPEED } from './systems/combat.js';
 export { projectileSystem, HIT_RADIUS } from './systems/projectile.js';

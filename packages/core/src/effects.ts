@@ -13,7 +13,7 @@
 
 import type { World } from './world.js';
 import type { EnemyInstance, TowerInstance } from './types.js';
-import { effectiveStats } from './upgrade.js';
+import { effectiveStats, abilityBuff } from './upgrade.js';
 
 export interface EffectContext {
   world: World;
@@ -37,10 +37,13 @@ export interface Effect {
 export const directDamage: Effect = {
   apply({ world, tower, target }) {
     if (!target) return;
-    const def = world.getRegistry().getTower(tower.type);
+    const registry = world.getRegistry();
+    const def = registry.getTower(tower.type);
     if (!def) return;
-    // Use the tower's effective (upgraded) damage, read from its data.
-    target.hp -= effectiveStats(def, tower).damage;
+    // Use the tower's effective (upgraded) damage, including any active ability
+    // buff, all read from data.
+    const buff = abilityBuff(world.getState(), (id) => registry.getTower(id), tower);
+    target.hp -= effectiveStats(def, tower).damage * buff.damage;
   },
 };
 

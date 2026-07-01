@@ -19,7 +19,16 @@ const map: MapDef = {
 };
 
 function tower(x: number, y: number): TowerInstance {
-  return { id: 't', type: 'x', pos: { x, y }, tiers: [0, 0], targeting: 'first', cooldown: 0 };
+  return {
+    id: 't',
+    type: 'x',
+    pos: { x, y },
+    tiers: [0, 0],
+    targeting: 'first',
+    cooldown: 0,
+    abilityCooldown: 0,
+    abilityActive: 0,
+  };
 }
 
 describe('placement geometry', () => {

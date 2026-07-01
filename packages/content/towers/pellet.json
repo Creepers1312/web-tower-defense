@@ -24,7 +24,20 @@
         { "name": "Sharp Shots", "cost": 140, "modifiers": { "pierce": 1 } },
         { "name": "Razor Sharp Shots", "cost": 360, "modifiers": { "pierce": 1 } },
         { "name": "Triple Darts", "cost": 850, "modifiers": { "shots": 2 }, "sprite": "dart_b3" },
-        { "name": "Super Monkey Fan Club", "cost": 2600, "modifiers": { "fireRate": 2, "pierce": 2 }, "sprite": "dart_b4" }
+        {
+          "name": "Super Monkey Fan Club",
+          "cost": 2600,
+          "modifiers": { "fireRate": 2, "pierce": 2 },
+          "ability": {
+            "id": "super_monkey_fan_club",
+            "name": "Super Monkey Fan Club",
+            "duration": 15,
+            "cooldown": 60,
+            "radius": 130,
+            "buff": { "fireRate": 3, "range": 1.3 }
+          },
+          "sprite": "dart_b4"
+        }
       ]
     }
   ]
