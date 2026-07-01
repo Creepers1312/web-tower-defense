@@ -62,6 +62,8 @@ export interface UpgradeTier {
   addEffects?: string[];
   /** Capabilities this tier unlocks (e.g. camo detection, lead popping). */
   grants?: TowerCapabilities;
+  /** Sprite key shown once this tier is the tower's highest reached (renderer). */
+  sprite?: string;
 }
 
 /** A single upgrade branch: exactly four tiers. */
