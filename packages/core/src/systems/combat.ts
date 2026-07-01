@@ -12,7 +12,13 @@ import type { EnemyInstance, TargetingMode, Vec2 } from '../types.js';
 import { effectiveStats, activeEffects, towerCapabilities, abilityBuff } from '../upgrade.js';
 
 /** Speed of fired projectiles, in world units per second. */
-export const PROJECTILE_SPEED = 420;
+export const PROJECTILE_SPEED = 560;
+
+/** Angular gap (radians) between darts of a multi-shot fan (~8°). */
+export const SHOT_SPREAD = 0.14;
+
+/** Extra distance beyond a tower's range a dart keeps flying before expiring. */
+export const PROJECTILE_RANGE_MARGIN = 40;
 
 /**
  * Choose which enemy a tower at `pos` with the given `range` and `mode` targets.
@@ -61,36 +67,6 @@ export function selectTarget(
   return best;
 }
 
-/** Up to `count` distinct in-range targets, best-first by the targeting mode. */
-export function selectTargets(
-  pos: Vec2,
-  range: number,
-  mode: TargetingMode,
-  enemies: EnemyInstance[],
-  canSeeCamo: boolean,
-  count: number,
-): EnemyInstance[] {
-  const inRange = enemies.filter((e) => {
-    if (!e.alive) return false;
-    if (!canSeeCamo && e.flags.includes('camo')) return false;
-    return Math.hypot(e.pos.x - pos.x, e.pos.y - pos.y) <= range;
-  });
-  const score = (e: EnemyInstance): number => {
-    switch (mode) {
-      case 'first':
-        return e.distance;
-      case 'last':
-        return -e.distance;
-      case 'close':
-        return -Math.hypot(e.pos.x - pos.x, e.pos.y - pos.y);
-      case 'strong':
-        return e.hp;
-    }
-  };
-  inRange.sort((a, b) => score(b) - score(a));
-  return inRange.slice(0, Math.max(1, count));
-}
-
 export function combatSystem(ctx: SystemContext): void {
   const { state, registry, dt } = ctx;
 
@@ -108,35 +84,35 @@ export function combatSystem(ctx: SystemContext): void {
     stats.damage *= buff.damage;
     stats.range *= buff.range;
     const caps = towerCapabilities(def, tower);
-    const targets = selectTargets(
-      tower.pos,
-      stats.range,
-      tower.targeting,
-      state.enemies,
-      caps.camoDetection,
-      Math.max(1, Math.round(stats.shots)),
-    );
-    if (targets.length === 0) {
+
+    // Pick one enemy to aim at; darts then fly straight along that heading.
+    const target = selectTarget(tower.pos, stats.range, tower.targeting, state.enemies, caps.camoDetection);
+    if (!target) {
       tower.cooldown = 0; // stay ready so we fire as soon as a target appears
       continue;
     }
 
-    // Fire `shots` projectiles; if fewer distinct targets, extra shots repeat
-    // onto the primary target.
+    const baseAngle = Math.atan2(target.pos.y - tower.pos.y, target.pos.x - tower.pos.x);
     const shots = Math.max(1, Math.round(stats.shots));
+    const pops = Math.max(1, Math.round(stats.pierce) + 1);
+    const maxDist = stats.range + PROJECTILE_RANGE_MARGIN;
     const effects = activeEffects(def, tower);
+
+    // Fire a symmetric fan of straight darts centred on the aim direction.
     for (let i = 0; i < shots; i++) {
-      const target = targets[i % targets.length]!;
+      const angle = baseAngle + (i - (shots - 1) / 2) * SHOT_SPREAD;
       state.projectiles.push({
         id: `p${state.seq++}`,
         pos: { x: tower.pos.x, y: tower.pos.y },
-        target: target.id,
+        vel: { x: Math.cos(angle) * PROJECTILE_SPEED, y: Math.sin(angle) * PROJECTILE_SPEED },
         damage: stats.damage,
-        speed: PROJECTILE_SPEED,
         source: tower.id,
         effects,
         popsLead: caps.popsLead,
-        pierce: Math.max(0, Math.round(stats.pierce)),
+        pops,
+        hitIds: [],
+        traveled: 0,
+        maxDist,
       });
     }
 

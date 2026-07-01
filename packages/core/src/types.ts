@@ -216,18 +216,24 @@ export interface EnemyInstance {
 export interface ProjectileInstance {
   id: string;
   pos: Vec2;
-  /** Target enemy id, or null if the target no longer exists. */
-  target: string | null;
+  /** Velocity in world units/sec. Projectiles fly in a straight line — they do
+   *  NOT home in on a target; the direction is fixed at fire time. */
+  vel: Vec2;
   damage: number;
-  speed: number;
   /** Id of the tower that fired this projectile (for effect resolution). */
   source: string;
   /** Effect names to run on impact (snapshot of the tower's active effects). */
   effects: string[];
   /** Whether this shot can damage lead enemies (snapshot at fire time). */
   popsLead: boolean;
-  /** Extra enemies this shot can also hit on impact (0 = single target). */
-  pierce: number;
+  /** Enemies this projectile can still pop before it expires (pierce + 1). */
+  pops: number;
+  /** Ids of enemies already popped, so a shot hits each enemy at most once. */
+  hitIds: string[];
+  /** Distance travelled so far (world units). */
+  traveled: number;
+  /** Maximum distance the projectile flies before expiring. */
+  maxDist: number;
 }
 
 export type GamePhase = 'building' | 'wave' | 'won' | 'lost';

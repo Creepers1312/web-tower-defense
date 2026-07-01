@@ -516,12 +516,9 @@ export class PixiRenderer {
         this.projectileNodes.set(p.id, node);
       }
       node.obj.position.set(p.pos.x, p.pos.y);
-      // Point the dart in its direction of travel (toward its target).
+      // Point the dart along its (fixed) direction of travel.
       if (node.kind === 'dart') {
-        const target = state.enemies.find((e) => e.id === p.target && e.alive);
-        if (target) {
-          node.obj.rotation = Math.atan2(target.pos.y - p.pos.y, target.pos.x - p.pos.x);
-        }
+        node.obj.rotation = Math.atan2(p.vel.y, p.vel.x);
       }
     }
     for (const [id, node] of this.projectileNodes) {
