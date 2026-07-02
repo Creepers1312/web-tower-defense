@@ -167,9 +167,13 @@ export class PixiRenderer {
   private readonly animations = new Map<string, Texture[]>();
   /** Per-key sprite anchor (fraction of the frame) where the body's visual
    *  centre sits — for sheets whose figure isn't centred in the frame (e.g. a
-   *  throwing arm extends to one side). Loaded from sprites/anchors.json;
-   *  keys not listed default to the frame centre (0.5, 0.5). */
-  private readonly anchors = new Map<string, { x: number; y: number }>();
+   *  throwing arm extends to one side). An optional `refH` gives the fraction
+   *  of the frame height the figure itself occupies, for sheets whose frames
+   *  carry animation slack around the figure — it shrinks the scaling
+   *  reference so the figure renders as large as tight-framed towers.
+   *  Loaded from sprites/anchors.json; keys not listed default to the frame
+   *  centre (0.5, 0.5) and a full-frame figure (refH 1). */
+  private readonly anchors = new Map<string, { x: number; y: number; refH?: number }>();
   private readonly range = new Graphics();
   private readonly ghost = new Graphics();
 
@@ -354,7 +358,7 @@ export class PixiRenderer {
     try {
       const res = await fetch('/sprites/anchors.json');
       if (res.ok) {
-        const data = (await res.json()) as Record<string, { x: number; y: number }>;
+        const data = (await res.json()) as Record<string, { x: number; y: number; refH?: number }>;
         for (const [key, a] of Object.entries(data)) this.anchors.set(key, a);
       }
     } catch {
@@ -481,8 +485,14 @@ export class PixiRenderer {
         node.root.removeChildren().forEach((c) => c.destroy());
         // Scale every stage relative to the tower's base sprite so larger-drawn
         // upgrades (e.g. the catapult) stay larger instead of being shrunk.
+        // The base key's refH (anchors.json) discounts animation slack around
+        // the figure so e.g. the boomerang monkey matches the dart monkey.
         const baseKey = this.registry.getTower(tower.type)?.sprite;
-        const refHeight = baseKey ? this.animations.get(baseKey)?.[0]?.height : undefined;
+        const baseFrame = baseKey ? this.animations.get(baseKey)?.[0] : undefined;
+        const refHeight =
+          baseKey && baseFrame
+            ? baseFrame.height * (this.anchors.get(baseKey)?.refH ?? 1)
+            : undefined;
         const body =
           this.makeBody(wantKey, TOWER_RADIUS * 2, refHeight) ??
           new Graphics().circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
