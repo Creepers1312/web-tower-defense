@@ -102,6 +102,26 @@ function drawSpikyBall(g: Graphics, radius: number, spikes = 8): Graphics {
   return g;
 }
 
+/** Draw a placeholder boomerang: two blades meeting at a rounded elbow, so a
+ *  spinning boomerang projectile reads as a boomerang rather than a dart. */
+function drawBoomerang(g: Graphics, size: number): Graphics {
+  const arm = size;
+  const w = size * 0.42;
+  // A wide "V" (chevron) centred on the elbow, filled as one polygon.
+  g.poly([
+    -arm, -arm * 0.15,
+    -arm + w, -arm * 0.15 - w * 0.2,
+    0, w * 0.55,
+    arm - w, -arm * 0.15 - w * 0.2,
+    arm, -arm * 0.15,
+    w * 0.5, w * 0.9,
+    -w * 0.5, w * 0.9,
+  ])
+    .fill(0xd97706)
+    .stroke({ width: 1.5, color: 0x7c3a06 });
+  return g;
+}
+
 /** What the renderer should highlight this frame (selection / placement ghost). */
 export interface RenderView {
   selectedTowerId: string | null;
@@ -142,6 +162,11 @@ export class PixiRenderer {
   private readonly projectileNodes = new Map<string, { obj: Container; kind: string }>();
   /** One or more textures per sprite key (multiple → an animation). */
   private readonly animations = new Map<string, Texture[]>();
+  /** Per-key sprite anchor (fraction of the frame) where the body's visual
+   *  centre sits — for sheets whose figure isn't centred in the frame (e.g. a
+   *  throwing arm extends to one side). Loaded from sprites/anchors.json;
+   *  keys not listed default to the frame centre (0.5, 0.5). */
+  private readonly anchors = new Map<string, { x: number; y: number }>();
   private readonly range = new Graphics();
   private readonly ghost = new Graphics();
 
@@ -284,7 +309,7 @@ export class PixiRenderer {
    *  A key with `{key}_0.png`, `{key}_1.png`, … becomes an animation; otherwise
    *  a single `{key}.png` is loaded. */
   private async loadSprites(): Promise<void> {
-    const keys = new Set<string>(['proj_dart', 'pop_big', 'pop_small']); // extra sprites (not in defs)
+    const keys = new Set<string>(['proj_dart', 'proj_boom', 'pop_big', 'pop_small']); // extra sprites (not in defs)
     for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
     for (const t of this.registry.allTowers()) {
       if (t.sprite) keys.add(t.sprite);
@@ -314,6 +339,16 @@ export class PixiRenderer {
       }
       if (frames.length) this.animations.set(key, frames);
     }
+
+    try {
+      const res = await fetch('/sprites/anchors.json');
+      if (res.ok) {
+        const data = (await res.json()) as Record<string, { x: number; y: number }>;
+        for (const [key, a] of Object.entries(data)) this.anchors.set(key, a);
+      }
+    } catch {
+      // No anchor overrides — every sprite anchors at its centre.
+    }
   }
 
   /** Build a body sized to `targetHeight`: an AnimatedSprite for multi-frame
@@ -325,14 +360,15 @@ export class PixiRenderer {
     if (!frames || frames.length === 0) return null;
     const first = frames[0]!;
     const scale = targetHeight / (refHeight ?? first.height);
+    const anchor = (key ? this.anchors.get(key) : undefined) ?? { x: 0.5, y: 0.5 };
     if (frames.length === 1) {
       const s = new Sprite(first);
-      s.anchor.set(0.5);
+      s.anchor.set(anchor.x, anchor.y);
       s.scale.set(scale);
       return s;
     }
     const anim = new AnimatedSprite(frames);
-    anim.anchor.set(0.5);
+    anim.anchor.set(anchor.x, anchor.y);
     anim.scale.set(scale);
     anim.animationSpeed = 0.35;
     anim.loop = false;
@@ -551,8 +587,9 @@ export class PixiRenderer {
 
   /** Which projectile look a shot uses, based on the firing tower's stage.
    *  Catapult stages throw balls; everything else throws the dart. */
-  private projectileKind(sourceTowerId: string): 'dart' | 'a2' | 'a3' | 'a4' {
+  private projectileKind(sourceTowerId: string): 'dart' | 'a2' | 'a3' | 'a4' | 'boom' {
     const key = this.currentTowerSprite(sourceTowerId);
+    if (key?.startsWith('boom')) return 'boom'; // boomerang tower throws a boomerang
     if (key === 'dart_a2') return 'a2';
     if (key === 'dart_a3') return 'a3';
     if (key === 'dart_a4') return 'a4';
@@ -560,7 +597,19 @@ export class PixiRenderer {
   }
 
   /** Build the display object for a projectile of the given kind. */
-  private makeProjectile(kind: 'dart' | 'a2' | 'a3' | 'a4'): Container {
+  private makeProjectile(kind: 'dart' | 'a2' | 'a3' | 'a4' | 'boom'): Container {
+    if (kind === 'boom') {
+      // Prefer a supplied boomerang sprite (spun in syncProjectiles); otherwise
+      // fall back to a drawn placeholder boomerang.
+      const tex = this.animations.get('proj_boom')?.[0];
+      if (tex) {
+        const s = new Sprite(tex);
+        s.anchor.set(0.5);
+        s.scale.set(26 / Math.max(tex.width, tex.height)); // boomerang ~26px across
+        return s;
+      }
+      return drawBoomerang(new Graphics(), 9);
+    }
     if (kind === 'dart') {
       const tex = this.animations.get('proj_dart')?.[0];
       if (tex) {
@@ -593,6 +642,9 @@ export class PixiRenderer {
       // Point the dart's tip along its (fixed) direction of travel.
       if (node.kind === 'dart') {
         node.obj.rotation = Math.atan2(p.vel.y, p.vel.x) - DART_SPRITE_FORWARD;
+      } else if (node.kind === 'boom') {
+        // A boomerang spins as it flies; distance-based so it's frame-rate free.
+        node.obj.rotation = p.traveled * 0.08;
       }
     }
     for (const [id, node] of this.projectileNodes) {
