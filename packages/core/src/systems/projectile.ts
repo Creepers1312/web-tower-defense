@@ -1,14 +1,17 @@
 /**
- * projectileSystem — flies projectiles in a straight line and resolves hits.
+ * projectileSystem — flies projectiles and resolves hits.
  *
- * Projectiles do NOT home in on a target: each carries a fixed velocity set at
- * fire time and travels along that heading until it has popped `pops` enemies or
- * flown `maxDist`. As it passes through an enemy (within HIT_RADIUS of its travel
- * segment this tick) the firing tower's effects run — this is where damage is
- * dealt, via the `directDamage` effect. If the firing tower no longer exists
- * (e.g. it was sold mid-flight), the projectile's snapshot damage is applied
- * directly instead. Each enemy is hit at most once per projectile (`hitIds`).
- * Enemies reduced to zero hp are killed, granting their reward.
+ * Projectiles do NOT home in on a target: the flight is fixed at fire time.
+ * A plain shot keeps its velocity and travels straight; a shot with `turnRate`
+ * (boomerangs) rotates its heading at that constant rate, tracing a circular
+ * loop that returns to the thrower. Either way it flies until it has popped
+ * `pops` enemies or flown `maxDist`. As it passes through an enemy (within
+ * HIT_RADIUS of its travel segment this tick) the firing tower's effects run —
+ * this is where damage is dealt, via the `directDamage` effect. If the firing
+ * tower no longer exists (e.g. it was sold mid-flight), the projectile's
+ * snapshot damage is applied directly instead. Each enemy is hit at most once
+ * per projectile (`hitIds`). Enemies reduced to zero hp are killed, granting
+ * their reward.
  */
 
 import type { SystemContext } from './context.js';
@@ -84,11 +87,23 @@ function hitEnemy(
   return true;
 }
 
+/** Rotate a projectile's velocity by `angle` radians (constant-turn flight). */
+function rotateVel(proj: ProjectileInstance, angle: number): void {
+  const { x, y } = proj.vel;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  proj.vel = { x: x * cos - y * sin, y: x * sin + y * cos };
+}
+
 export function projectileSystem(ctx: SystemContext): void {
   const { state, dt } = ctx;
   const survivors: ProjectileInstance[] = [];
 
   for (const proj of state.projectiles) {
+    // Curved flight (boomerangs): turn half the tick's rotation before moving
+    // and half after (midpoint rule), so the discretised polygon stays on the
+    // true circle and the loop closes back at the thrower.
+    if (proj.turnRate) rotateVel(proj, (proj.turnRate * dt) / 2);
     const from = proj.pos;
     const to = { x: proj.pos.x + proj.vel.x * dt, y: proj.pos.y + proj.vel.y * dt };
     const step = Math.hypot(to.x - from.x, to.y - from.y);
@@ -111,6 +126,7 @@ export function projectileSystem(ctx: SystemContext): void {
 
     proj.pos = to;
     proj.traveled += step;
+    if (proj.turnRate) rotateVel(proj, (proj.turnRate * dt) / 2);
     if (proj.pops > 0 && proj.traveled < proj.maxDist) survivors.push(proj);
   }
 
