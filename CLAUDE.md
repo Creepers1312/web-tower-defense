@@ -119,6 +119,10 @@ movement along the path.
 - **projectileSystem** flies projectiles to their target and, on impact, runs the
   tower's effects (damage is dealt by the `directDamage` effect); kills grant money.
   A popped enemy spawns its `children` at its position (the Nallon hierarchy).
+  Flight is fixed at fire time (no homing): straight by default, or — for towers
+  with `flight: 'boomerang'` on their def — a constant-rate turn
+  (`ProjectileInstance.turnRate`) tracing a circular loop whose diameter is the
+  tower→aim line, so the shot sweeps through the target and returns to the thrower.
 - **regrowSystem** heals damaged `regrow` enemies back toward `maxHp`.
 - **waveSystem** compacts dead enemies and handles wave completion / win.
 

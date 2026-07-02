@@ -117,6 +117,10 @@ export interface TowerDef {
   /** How the tower fires: aimed at a target (default) or evenly in all
    *  directions (radial — e.g. a tack shooter). */
   fireMode?: 'targeted' | 'radial';
+  /** How fired projectiles fly: in a straight line (default) or along a
+   *  circular loop through the aim point and back to the thrower
+   *  (boomerang physics). */
+  flight?: 'straight' | 'boomerang';
   /** Base special capabilities (may be extended by upgrade tiers). */
   camoDetection?: boolean;
   popsLead?: boolean;
@@ -225,9 +229,13 @@ export interface EnemyInstance {
 export interface ProjectileInstance {
   id: string;
   pos: Vec2;
-  /** Velocity in world units/sec. Projectiles fly in a straight line — they do
-   *  NOT home in on a target; the direction is fixed at fire time. */
+  /** Velocity in world units/sec. Projectiles do NOT home in on a target: the
+   *  flight is fixed at fire time — straight ahead, or (for boomerangs) a
+   *  constant-rate turn tracing a circular loop back to the thrower. */
   vel: Vec2;
+  /** Radians/sec the heading turns while flying (signed; absent/0 = straight).
+   *  A constant turn rate traces a circle of radius `speed / turnRate`. */
+  turnRate?: number;
   damage: number;
   /** Id of the tower that fired this projectile (for effect resolution). */
   source: string;

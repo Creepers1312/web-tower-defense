@@ -21,6 +21,15 @@ export const SHOT_SPREAD = 0.14;
 /** Extra distance beyond the aim point a dart keeps flying before expiring. */
 export const PROJECTILE_RANGE_MARGIN = 60;
 
+/** Smallest loop diameter of a boomerang throw. Point-blank targets would
+ *  otherwise degenerate into a near-infinite turn rate; the loop still starts
+ *  at the tower, so very close enemies are swept anyway. */
+export const BOOMERANG_MIN_DIAMETER = 60;
+
+/** A boomerang reaches its aim point along a semicircle — π/2 × the straight
+ *  distance — so lead prediction must use 2/π of the projectile speed. */
+export const BOOMERANG_SPEED_FACTOR = 2 / Math.PI;
+
 /**
  * Choose which enemy a tower at `pos` with the given `range` and `mode` targets.
  * Camo enemies are invisible unless `canSeeCamo` is true. Returns null if no
@@ -111,12 +120,14 @@ export function combatSystem(ctx: SystemContext): void {
     const pops = Math.max(1, Math.round(stats.pierce) + 1);
     const effects = activeEffects(def, tower);
     const radial = def.fireMode === 'radial';
+    const boomerang = def.flight === 'boomerang';
 
     // Determine the firing heading. Radial towers (tack shooters) fire in all
     // directions as long as any enemy is in range; aimed towers lead a target.
     let baseAngle: number;
     let spread: number;
     let maxDist: number;
+    let aimDist = 0;
     if (radial) {
       const inRange = selectTarget(
         tower.pos,
@@ -138,21 +149,37 @@ export function combatSystem(ctx: SystemContext): void {
         tower.cooldown = 0; // stay ready so we fire as soon as a target appears
         continue;
       }
-      // Lead the target: aim where it will be when the shot arrives.
-      const aim = predictAim(tower.pos, target, map.path, PROJECTILE_SPEED);
+      // Lead the target: aim where it will be when the shot arrives. Boomerangs
+      // approach along an arc, so their effective closing speed is lower.
+      const aimSpeed = boomerang ? PROJECTILE_SPEED * BOOMERANG_SPEED_FACTOR : PROJECTILE_SPEED;
+      const aim = predictAim(tower.pos, target, map.path, aimSpeed);
       baseAngle = Math.atan2(aim.y - tower.pos.y, aim.x - tower.pos.x);
       spread = SHOT_SPREAD;
-      const aimDist = Math.hypot(aim.x - tower.pos.x, aim.y - tower.pos.y);
+      aimDist = Math.hypot(aim.x - tower.pos.x, aim.y - tower.pos.y);
       maxDist = Math.max(stats.range, aimDist) + PROJECTILE_RANGE_MARGIN;
     }
 
     // Fire the shots: a full ring for radial, a symmetric fan for aimed towers.
     for (let i = 0; i < shots; i++) {
       const angle = radial ? i * spread : baseAngle + (i - (shots - 1) / 2) * spread;
+      let vel = { x: Math.cos(angle) * PROJECTILE_SPEED, y: Math.sin(angle) * PROJECTILE_SPEED };
+      let turnRate: number | undefined;
+      if (boomerang && !radial) {
+        // Boomerang physics: the throw traces a circle whose diameter is the
+        // tower→aim line. Launched perpendicular to that line, turning at v/r,
+        // it sweeps through the aim point at the far side of the loop and
+        // returns to the thrower, popping everything along the way.
+        const r = Math.max(BOOMERANG_MIN_DIAMETER, aimDist) / 2;
+        const heading = angle - Math.PI / 2;
+        vel = { x: Math.cos(heading) * PROJECTILE_SPEED, y: Math.sin(heading) * PROJECTILE_SPEED };
+        turnRate = PROJECTILE_SPEED / r;
+        maxDist = 2 * Math.PI * r; // one full loop → expires back at the thrower
+      }
       state.projectiles.push({
         id: `p${state.seq++}`,
         pos: { x: tower.pos.x, y: tower.pos.y },
-        vel: { x: Math.cos(angle) * PROJECTILE_SPEED, y: Math.sin(angle) * PROJECTILE_SPEED },
+        vel,
+        ...(turnRate !== undefined && { turnRate }),
         damage: stats.damage,
         source: tower.id,
         effects,
