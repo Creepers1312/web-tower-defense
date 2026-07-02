@@ -279,8 +279,11 @@ export class Hud {
       btn.classList.toggle('active', this.placingType === type);
     }
 
+    const warning = this.capabilityWarning();
     if (performance.now() < this.bannerUntil) {
       this.hint.textContent = this.banner;
+    } else if (warning) {
+      this.hint.textContent = warning;
     } else {
       this.hint.textContent = this.placingType
         ? 'Click inside a buildable area (clear of the path) to place. Click the tower again to cancel.'
@@ -288,6 +291,36 @@ export class Hud {
     }
 
     this.refreshSelected();
+  }
+
+  /** Warn when lead/camo Nallons are on the field and no placed tower can
+   *  counter them (the classic "why can't I pop this?" moment). */
+  private capabilityWarning(): string | null {
+    const state = this.world.getState();
+    let lead = false;
+    let camo = false;
+    for (const e of state.enemies) {
+      if (!e.alive) continue;
+      if (e.flags.includes('lead')) lead = true;
+      if (e.flags.includes('camo')) camo = true;
+    }
+    if (!lead && !camo) return null;
+
+    let canPopLead = false;
+    let canSeeCamo = false;
+    for (const t of state.towers) {
+      const def = this.registry.getTower(t.type);
+      if (!def) continue;
+      const caps = towerCapabilities(def, t);
+      if (caps.popsLead) canPopLead = true;
+      if (caps.camoDetection) canSeeCamo = true;
+    }
+
+    const needs: string[] = [];
+    if (lead && !canPopLead) needs.push('lead-popping (e.g. Boomerang → Red Hot ’Rangs)');
+    if (camo && !canSeeCamo) needs.push('camo detection (e.g. Dart → Enhanced Eyesight)');
+    if (!needs.length) return null;
+    return `⚠ Some Nallons are immune — you need ${needs.join(' and ')}.`;
   }
 
   private refreshSelected(): void {

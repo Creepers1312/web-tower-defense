@@ -46,6 +46,7 @@ const COLORS = {
   lead: 0x9ca3af,
   camoRing: 0x16a34a,
   regrowRing: 0xf472b6,
+  leadRing: 0xcbd5e1,
   enemyHpBg: 0x1f2937,
   enemyHp: 0x22c55e,
   tower: 0x38bdf8,
@@ -510,6 +511,10 @@ export class PixiRenderer {
       }
       if (enemy.flags.includes('regrow')) {
         o.circle(0, 0, ENEMY_RADIUS + 4).stroke({ width: 2, color: COLORS.regrowRing });
+      }
+      if (enemy.flags.includes('lead')) {
+        // Steel ring marks a lead Nallon (only lead-popping shots hurt it).
+        o.circle(0, 0, ENEMY_RADIUS + 6).stroke({ width: 3, color: COLORS.leadRing });
       }
       const frac = enemy.maxHp > 0 ? Math.max(0, enemy.hp / enemy.maxHp) : 0;
       if (frac < 1) {

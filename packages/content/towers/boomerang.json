@@ -26,10 +26,10 @@
     },
     {
       "tiers": [
-        { "name": "Sonic Boom", "cost": 300, "modifiers": { "range": 15 } },
+        { "name": "Sonic Boom", "cost": 200, "modifiers": { "range": 15 } },
         {
           "name": "Red Hot 'Rangs",
-          "cost": 500,
+          "cost": 380,
           "modifiers": { "damage": 1 },
           "grants": { "popsLead": true },
           "sprite": "boom_b2"
