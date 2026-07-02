@@ -317,20 +317,23 @@ export class PixiRenderer {
   }
 
   /** Build a body sized to `targetHeight`: an AnimatedSprite for multi-frame
-   *  keys (plays once on demand), a Sprite for single frames, or null. */
-  private makeBody(key: string | undefined, targetHeight: number): Container | null {
+   *  keys (plays once on demand), a Sprite for single frames, or null.
+   *  `refHeight` (e.g. a tower's base-sprite height) keeps upgrade stages that
+   *  are drawn larger proportionally larger instead of normalising them all. */
+  private makeBody(key: string | undefined, targetHeight: number, refHeight?: number): Container | null {
     const frames = key ? this.animations.get(key) : undefined;
     if (!frames || frames.length === 0) return null;
     const first = frames[0]!;
+    const scale = targetHeight / (refHeight ?? first.height);
     if (frames.length === 1) {
       const s = new Sprite(first);
       s.anchor.set(0.5);
-      s.scale.set(targetHeight / first.height);
+      s.scale.set(scale);
       return s;
     }
     const anim = new AnimatedSprite(frames);
     anim.anchor.set(0.5);
-    anim.scale.set(targetHeight / first.height);
+    anim.scale.set(scale);
     anim.animationSpeed = 0.35;
     anim.loop = false;
     anim.onComplete = () => anim.gotoAndStop(0);
@@ -429,8 +432,12 @@ export class PixiRenderer {
       // (Re)build the body when the tower is new or its sprite changed.
       if (node.spriteKey !== wantKey || node.root.children.length === 0) {
         node.root.removeChildren().forEach((c) => c.destroy());
+        // Scale every stage relative to the tower's base sprite so larger-drawn
+        // upgrades (e.g. the catapult) stay larger instead of being shrunk.
+        const baseKey = this.registry.getTower(tower.type)?.sprite;
+        const refHeight = baseKey ? this.animations.get(baseKey)?.[0]?.height : undefined;
         const body =
-          this.makeBody(wantKey, TOWER_RADIUS * 2) ??
+          this.makeBody(wantKey, TOWER_RADIUS * 2, refHeight) ??
           new Graphics().circle(0, 0, TOWER_RADIUS).fill(COLORS.tower);
         node.overlay = new Graphics();
         node.body = body;
