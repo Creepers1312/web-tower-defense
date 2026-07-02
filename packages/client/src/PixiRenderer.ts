@@ -162,6 +162,11 @@ export class PixiRenderer {
   private readonly projectileNodes = new Map<string, { obj: Container; kind: string }>();
   /** One or more textures per sprite key (multiple → an animation). */
   private readonly animations = new Map<string, Texture[]>();
+  /** Per-key sprite anchor (fraction of the frame) where the body's visual
+   *  centre sits — for sheets whose figure isn't centred in the frame (e.g. a
+   *  throwing arm extends to one side). Loaded from sprites/anchors.json;
+   *  keys not listed default to the frame centre (0.5, 0.5). */
+  private readonly anchors = new Map<string, { x: number; y: number }>();
   private readonly range = new Graphics();
   private readonly ghost = new Graphics();
 
@@ -334,6 +339,16 @@ export class PixiRenderer {
       }
       if (frames.length) this.animations.set(key, frames);
     }
+
+    try {
+      const res = await fetch('/sprites/anchors.json');
+      if (res.ok) {
+        const data = (await res.json()) as Record<string, { x: number; y: number }>;
+        for (const [key, a] of Object.entries(data)) this.anchors.set(key, a);
+      }
+    } catch {
+      // No anchor overrides — every sprite anchors at its centre.
+    }
   }
 
   /** Build a body sized to `targetHeight`: an AnimatedSprite for multi-frame
@@ -345,14 +360,15 @@ export class PixiRenderer {
     if (!frames || frames.length === 0) return null;
     const first = frames[0]!;
     const scale = targetHeight / (refHeight ?? first.height);
+    const anchor = (key ? this.anchors.get(key) : undefined) ?? { x: 0.5, y: 0.5 };
     if (frames.length === 1) {
       const s = new Sprite(first);
-      s.anchor.set(0.5);
+      s.anchor.set(anchor.x, anchor.y);
       s.scale.set(scale);
       return s;
     }
     const anim = new AnimatedSprite(frames);
-    anim.anchor.set(0.5);
+    anim.anchor.set(anchor.x, anchor.y);
     anim.scale.set(scale);
     anim.animationSpeed = 0.35;
     anim.loop = false;
