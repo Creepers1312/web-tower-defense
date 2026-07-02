@@ -1,13 +1,12 @@
 /**
  * Client entry point.
  *
- * Shows a start menu (difficulty + map), then runs the game with a fixed-timestep
- * loop. When the game is won or lost, a game-over overlay appears; its button
- * reloads back to the menu.
+ * Menu flow: Title -> Track select -> Difficulty -> Game. On win/loss a game-over
+ * overlay appears; its button reloads back to the title.
  */
 
 import { Registry, World, registerBuiltinEffects } from '@td/core';
-import type { WorldOptions } from '@td/core';
+import type { MapDef, WorldOptions } from '@td/core';
 import { contentAddon } from '@td/content';
 import { PixiRenderer } from './PixiRenderer.js';
 import { Hud } from './hud.js';
@@ -26,18 +25,53 @@ function el<T extends HTMLElement>(id: string): T {
   return node as T;
 }
 
+/** A small SVG thumbnail of a map's track, drawn from its real path data. */
+function mapPreviewSvg(map: MapDef): string {
+  const pts = map.path.map((p) => `${p.x},${p.y}`).join(' ');
+  return (
+    `<svg viewBox="0 0 800 660" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">` +
+    `<rect x="0" y="0" width="800" height="660" fill="#5a9a3f"/>` +
+    `<polyline points="${pts}" fill="none" stroke="#4a7c34" stroke-width="46" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<polyline points="${pts}" fill="none" stroke="#e6d5a3" stroke-width="34" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `</svg>`
+  );
+}
+
 async function main(): Promise<void> {
   const registry = new Registry();
   registerBuiltinEffects(registry);
   registry.use(contentAddon);
 
   const startMenu = el('startMenu');
-  const diffRow = el('difficultyRow');
-  const mapRow = el('mapRow');
+  const steps = Array.from(startMenu.querySelectorAll<HTMLElement>('.menu-step'));
+  const showStep = (name: string): void => {
+    for (const s of steps) s.style.display = s.dataset.step === name ? 'block' : 'none';
+  };
 
   let difficulty: Difficulty = 'easy';
-  let mapId = registry.allMaps()[0]?.id ?? '';
+  let selectedMap: MapDef = registry.allMaps()[0]!;
 
+  el<HTMLButtonElement>('toTrack').addEventListener('click', () => showStep('track'));
+  for (const b of startMenu.querySelectorAll<HTMLButtonElement>('button[data-back]')) {
+    b.addEventListener('click', () => showStep(b.dataset.back ?? 'title'));
+  }
+
+  // Track-select grid with a preview per map.
+  const grid = el('trackGrid');
+  for (const m of registry.allMaps()) {
+    const card = document.createElement('button');
+    card.className = 'track-card';
+    card.innerHTML = `<div class="track-thumb">${mapPreviewSvg(m)}</div><span>${m.name}</span>`;
+    card.addEventListener('click', () => {
+      selectedMap = m;
+      el('diffMapName').textContent = m.name;
+      el('diffPreview').innerHTML = mapPreviewSvg(m);
+      showStep('difficulty');
+    });
+    grid.appendChild(card);
+  }
+
+  const diffRow = el('difficultyRow');
   for (const btn of diffRow.querySelectorAll<HTMLButtonElement>('button[data-diff]')) {
     btn.addEventListener('click', () => {
       difficulty = btn.dataset.diff as Difficulty;
@@ -45,20 +79,9 @@ async function main(): Promise<void> {
     });
   }
 
-  for (const m of registry.allMaps()) {
-    const btn = document.createElement('button');
-    btn.textContent = m.name;
-    if (m.id === mapId) btn.classList.add('active');
-    btn.addEventListener('click', () => {
-      mapId = m.id;
-      for (const b of mapRow.querySelectorAll('button')) b.classList.toggle('active', b === btn);
-    });
-    mapRow.appendChild(btn);
-  }
-
   el<HTMLButtonElement>('playBtn').addEventListener('click', () => {
     startMenu.style.display = 'none';
-    void startGame(registry, mapId, DIFFICULTIES[difficulty]);
+    void startGame(registry, selectedMap.id, DIFFICULTIES[difficulty]);
   });
 }
 
