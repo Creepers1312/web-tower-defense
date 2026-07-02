@@ -438,6 +438,60 @@
         margin-top: 18px;
         font-size: 16px;
       }
+      .menu-back {
+        width: auto;
+        margin-top: 14px;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+      }
+      .menu-back:hover:not(:disabled) {
+        color: #e2e8f0;
+        background: transparent;
+      }
+      /* Track-select grid with map previews. */
+      .track-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 6px;
+      }
+      .track-card {
+        width: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+        text-align: center;
+      }
+      .track-card.active {
+        outline: 2px solid #38bdf8;
+      }
+      .track-thumb {
+        width: 180px;
+        height: 148px;
+        border-radius: 8px;
+        overflow: hidden;
+        line-height: 0;
+      }
+      .track-thumb svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .diff-preview {
+        width: 200px;
+        height: 165px;
+        margin: 0 auto 6px;
+        border-radius: 8px;
+        overflow: hidden;
+        line-height: 0;
+      }
+      .diff-preview svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -514,23 +568,36 @@
       <div id="hint"></div>
     </div>
 
-    <!-- Start menu: difficulty + map selection, shown before the game starts. -->
+    <!-- Start menu: title -> track select -> difficulty (BTD-style flow). -->
     <div id="startMenu" class="overlay">
       <div class="menu-card">
-        <h1>Nallon Defense</h1>
-        <div class="menu-section">
-          <div class="menu-label">Difficulty</div>
+        <!-- Step 1: title -->
+        <div class="menu-step" data-step="title">
+          <h1>Nallon Defense</h1>
+          <p class="muted">Original tower defense</p>
+          <button id="toTrack" class="go-btn menu-play">Play ▶</button>
+          <button id="coopBtn" class="menu-play" disabled title="Coming soon">Co-op — coming soon</button>
+        </div>
+
+        <!-- Step 2: track selection grid -->
+        <div class="menu-step" data-step="track" style="display:none">
+          <h1>Select Track</h1>
+          <div id="trackGrid" class="track-grid"></div>
+          <button class="menu-back" data-back="title">← Back</button>
+        </div>
+
+        <!-- Step 3: difficulty for the chosen track -->
+        <div class="menu-step" data-step="difficulty" style="display:none">
+          <h1 id="diffMapName">Difficulty</h1>
+          <div id="diffPreview" class="diff-preview"></div>
           <div class="menu-row" id="difficultyRow">
             <button data-diff="easy" class="active">Easy</button>
             <button data-diff="medium">Medium</button>
             <button data-diff="hard">Hard</button>
           </div>
+          <button id="playBtn" class="go-btn menu-play">Start ▶</button>
+          <button class="menu-back" data-back="track">← Back</button>
         </div>
-        <div class="menu-section">
-          <div class="menu-label">Map</div>
-          <div class="menu-row" id="mapRow"></div>
-        </div>
-        <button id="playBtn" class="go-btn menu-play">Play ▶</button>
       </div>
     </div>
 
