@@ -122,6 +122,9 @@ function drawBoomerang(g: Graphics, size: number): Graphics {
   return g;
 }
 
+/** The projectile looks a shot can use (chosen from the firing tower's stage). */
+type ProjectileKind = 'dart' | 'a2' | 'a3' | 'a4' | 'boom' | 'boom_saw' | 'boom_red';
+
 /** What the renderer should highlight this frame (selection / placement ghost). */
 export interface RenderView {
   selectedTowerId: string | null;
@@ -309,7 +312,15 @@ export class PixiRenderer {
    *  A key with `{key}_0.png`, `{key}_1.png`, … becomes an animation; otherwise
    *  a single `{key}.png` is loaded. */
   private async loadSprites(): Promise<void> {
-    const keys = new Set<string>(['proj_dart', 'proj_boom', 'pop_big', 'pop_small']); // extra sprites (not in defs)
+    // Extra sprites not referenced by defs (projectiles, pop bursts).
+    const keys = new Set<string>([
+      'proj_dart',
+      'proj_boom',
+      'proj_boom_saw',
+      'proj_boom_red',
+      'pop_big',
+      'pop_small',
+    ]);
     for (const e of this.registry.allEnemies()) if (e.sprite) keys.add(e.sprite);
     for (const t of this.registry.allTowers()) {
       if (t.sprite) keys.add(t.sprite);
@@ -586,10 +597,17 @@ export class PixiRenderer {
   }
 
   /** Which projectile look a shot uses, based on the firing tower's stage.
-   *  Catapult stages throw balls; everything else throws the dart. */
-  private projectileKind(sourceTowerId: string): 'dart' | 'a2' | 'a3' | 'a4' | 'boom' {
+   *  Catapult stages throw balls; the boomerang tower throws a boomerang whose
+   *  look follows its upgrades (glaive saw on path A, red hot on path B). */
+  private projectileKind(sourceTowerId: string): ProjectileKind {
     const key = this.currentTowerSprite(sourceTowerId);
-    if (key?.startsWith('boom')) return 'boom'; // boomerang tower throws a boomerang
+    if (key?.startsWith('boom')) {
+      const tower = this.world.getState().towers.find((t) => t.id === sourceTowerId);
+      const [a, b] = tower?.tiers ?? [0, 0];
+      if (a >= 2 && a >= b) return 'boom_saw'; // Glaive Thrower and beyond
+      if (b >= 2) return 'boom_red'; // Red Hot 'Rangs and beyond
+      return 'boom';
+    }
     if (key === 'dart_a2') return 'a2';
     if (key === 'dart_a3') return 'a3';
     if (key === 'dart_a4') return 'a4';
@@ -597,16 +615,18 @@ export class PixiRenderer {
   }
 
   /** Build the display object for a projectile of the given kind. */
-  private makeProjectile(kind: 'dart' | 'a2' | 'a3' | 'a4' | 'boom'): Container {
-    if (kind === 'boom') {
-      // Prefer a supplied boomerang sprite (spun in syncProjectiles); otherwise
-      // fall back to a drawn placeholder boomerang.
-      const tex = this.animations.get('proj_boom')?.[0];
-      if (tex) {
-        const s = new Sprite(tex);
-        s.anchor.set(0.5);
-        s.scale.set(26 / Math.max(tex.width, tex.height)); // boomerang ~26px across
-        return s;
+  private makeProjectile(kind: ProjectileKind): Container {
+    if (kind === 'boom' || kind === 'boom_saw' || kind === 'boom_red') {
+      // A looping spin animation from the boomerang sheets; the frames carry
+      // the rotation (and motion streaks), so no code-driven spin is needed.
+      const frames = this.animations.get(`proj_${kind}`);
+      if (frames && frames.length > 1) {
+        const anim = new AnimatedSprite(frames);
+        anim.anchor.set(0.5);
+        anim.scale.set(26 / Math.max(frames[0]!.width, frames[0]!.height));
+        anim.animationSpeed = 0.4;
+        anim.play();
+        return anim;
       }
       return drawBoomerang(new Graphics(), 9);
     }
@@ -642,8 +662,9 @@ export class PixiRenderer {
       // Point the dart's tip along its (fixed) direction of travel.
       if (node.kind === 'dart') {
         node.obj.rotation = Math.atan2(p.vel.y, p.vel.x) - DART_SPRITE_FORWARD;
-      } else if (node.kind === 'boom') {
-        // A boomerang spins as it flies; distance-based so it's frame-rate free.
+      } else if (node.kind.startsWith('boom') && node.obj instanceof Graphics) {
+        // Fallback drawn boomerang has no spin frames — rotate it in code,
+        // distance-based so it's frame-rate free.
         node.obj.rotation = p.traveled * 0.08;
       }
     }
