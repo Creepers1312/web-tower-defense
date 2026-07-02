@@ -32,7 +32,7 @@ const TYPES = [
   { id: 'nallon_camo', rbe: 4, unlock: 12, spacing: 0.6, cap: 12 },
   { id: 'nallon_regrow', rbe: 6, unlock: 13, spacing: 0.6, cap: 10 },
   { id: 'nallon_purple', rbe: 11, unlock: 14, spacing: 0.45, cap: 12 },
-  { id: 'nallon_lead', rbe: 23, unlock: 11, spacing: 0.9, cap: 8 },
+  { id: 'nallon_lead', rbe: 23, unlock: 13, spacing: 0.9, cap: 8 },
   { id: 'nallon_zebra', rbe: 23, unlock: 16, spacing: 0.7, cap: 10 },
   { id: 'nallon_rainbow', rbe: 47, unlock: 20, spacing: 0.6, cap: 8 },
   { id: 'nallon_armored', rbe: 104, unlock: 24, spacing: 0.9, cap: 8 }, // ceramic

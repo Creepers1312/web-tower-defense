@@ -1705,98 +1705,74 @@
           "delay": 0
         },
         {
-          "enemyId": "nallon_blue",
-          "count": 1,
-          "spacing": 0.45,
-          "delay": 1.5
-        },
-        {
           "enemyId": "nallon_green",
           "count": 1,
           "spacing": 0.5,
-          "delay": 3
+          "delay": 1.5
         },
         {
           "enemyId": "nallon_yellow",
-          "count": 1,
+          "count": 2,
           "spacing": 0.4,
-          "delay": 4.5
+          "delay": 3
         },
         {
           "enemyId": "nallon_pink",
           "count": 2,
           "spacing": 0.38,
-          "delay": 6
+          "delay": 4.5
         },
         {
           "enemyId": "nallon_white",
-          "count": 2,
+          "count": 5,
           "spacing": 0.7,
-          "delay": 7.5
+          "delay": 6
         },
         {
           "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_lead",
           "count": 2,
-          "spacing": 0.9,
-          "delay": 10.5
+          "spacing": 0.7,
+          "delay": 7.5
         }
       ]
     },
     {
       "entries": [
         {
-          "enemyId": "nallon_red",
+          "enemyId": "nallon_blue",
           "count": 1,
           "spacing": 0.45,
           "delay": 0
         },
         {
-          "enemyId": "nallon_blue",
+          "enemyId": "nallon_green",
           "count": 1,
-          "spacing": 0.45,
+          "spacing": 0.5,
           "delay": 1.5
         },
         {
           "enemyId": "nallon_yellow",
-          "count": 1,
+          "count": 2,
           "spacing": 0.4,
           "delay": 3
-        },
-        {
-          "enemyId": "nallon_camo",
-          "count": 1,
-          "spacing": 0.6,
-          "delay": 4.5
         },
         {
           "enemyId": "nallon_pink",
           "count": 2,
           "spacing": 0.38,
-          "delay": 6
+          "delay": 4.5
         },
         {
           "enemyId": "nallon_white",
-          "count": 3,
+          "count": 6,
           "spacing": 0.7,
-          "delay": 7.5
+          "delay": 6
         },
         {
           "enemyId": "nallon_black",
-          "count": 1,
-          "spacing": 0.7,
-          "delay": 9
-        },
-        {
-          "enemyId": "nallon_lead",
           "count": 2,
-          "spacing": 0.9,
-          "delay": 10.5
+          "spacing": 0.7,
+          "delay": 7.5
         }
       ]
     },
